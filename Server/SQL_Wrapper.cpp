@@ -1,7 +1,6 @@
 #include "SQL_Wrapper.h"
 
-SQL_Wrapper::SQL_Wrapper(std::string db) {
-	this->dbName = db;
+SQL_Wrapper::SQL_Wrapper() {
 }
 
 SQL_Wrapper::~SQL_Wrapper() {
@@ -12,17 +11,22 @@ SQL_Wrapper::~SQL_Wrapper() {
 void SQL_Wrapper::connectToDB()
 {
 	//try to get a connection
-	
-		this->driver = get_driver_instance();
-		this->connection = this->driver->connect("127.0.0.1", "root", "root");
-		this->connection->setSchema(this->dbName);	
-	
+	try {
+		driver = get_driver_instance();
+		connection = driver->connect("127.0.0.1", "root", "SQL123");
+		connection->setSchema("authentication");
+	}
+	catch (sql::SQLException &exception)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__ << std::endl;
+		std::cout << "(" << ")" << std::endl;
+	}
 }
 
 bool SQL_Wrapper::addAccount(std::string email, std::string password)
 {
 	//generate the userId.
-	long userId;// = math.rand();
+	long userId; //= math.rand();
 	this->statement = connection->createStatement();
 	//this->statement->execute("INSERT INTO web_auth email,salt,userId values("+email+","+password+","++")");
 

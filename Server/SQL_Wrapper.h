@@ -9,18 +9,14 @@
 
 class SQL_Wrapper {
 public:
-	SQL_Wrapper(std::string db);
+	SQL_Wrapper();
 	~SQL_Wrapper();
-
-	std::string dbName;
-
 
 	void connectToDB();
 	//add a client to the database
 	bool addAccount(std::string email,std::string password);
 	//authenticate the account
 	bool authenticateAccount(std::string email, std::string password);
-
 
 private:
 	//private driver and connection
