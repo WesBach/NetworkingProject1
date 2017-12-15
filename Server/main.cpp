@@ -6,6 +6,7 @@
 #include <WS2tcpip.h>
 #include "Buffer.h"
 #include <iostream>
+#include <algorithm>
 #include <sstream>
 #include <map>
 
@@ -355,28 +356,49 @@ void joinRoom(userInfo joinUser, char &roomName)
 
 void leaveRoom(userInfo leaveUserInfo, char &roomName)
 {
+	userInfo* valueToErase;
+	std::vector<userInfo*> roomUsers;
+
+	//Go Through the rooms
 	for (std::map<char, std::vector<userInfo*>>::iterator it = roomMap.begin(); it != roomMap.end(); ++it)
 	{
+		//Check if the the current room is the room the user specified to leave
 		if (roomName == it->first)
 		{
-			for (std::vector<userInfo*>::iterator iter = it->second.begin(); iter != it->second.end(); ++iter)
-			{
-				//TODO: if it is the same userInfo (this might not work)
-				if (*iter == &leaveUserInfo)
-				{
-					//DELETES THE USER FROM THE ROOM, AS LONG AS THEY ARE IN ANOTHER ROOM THE DATA IS SAVED. (pointer to user in lobby)
-					it->second.erase(iter);
-				}
-			}
-		}
-	}
+			//Pull the vector out of the map
+			roomUsers = roomMap[roomName];
 
+			//go through the users in the room
+			for (int i = 0; i < roomUsers.size(); i++)
+			{
+				//check if the requester to leave is in the room
+				if (&leaveUserInfo == roomUsers.at(i))
+				{
+					//remove the user from the room.
+					valueToErase = roomMap[roomName].at(i);
+					roomMap[roomName].erase(std::remove(roomMap[roomName].begin(), roomMap[roomName].end(), valueToErase), roomMap[roomName].end());
+				}
+			}//for
+		}//if roomName == it->first
+	}//for
+
+	//Send the leave room status update to all of the users in the room that was left
 	for (int i = 0; i < master.fd_count; i++)
 	{
+		bool userInRoom = false;
 		g_theBuffer = new Buffer();
 		SOCKET outSock = master.fd_array[i];
 		std::string message = "A User has Left the room : " + roomName;
-		if (outSock != ListenSocket && outSock != leaveUserInfo.userSocket)
+
+		for (int i = 0; i < roomUsers.size(); i++)
+		{
+			if (outSock == roomUsers[i]->userSocket)
+			{
+				userInRoom = true;
+			}
+		}
+
+		if (outSock != ListenSocket && userInRoom && outSock != leaveUserInfo.userSocket)
 		{
 			send(outSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 		}
