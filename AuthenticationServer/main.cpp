@@ -9,6 +9,7 @@
 #include "Buffer.h"
 #include "SQL_Wrapper.h"
 #include "AccountAuthentication.pb.h"
+#include "AccountAuthentication.pb.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "6000"	//was 8899
@@ -216,6 +217,8 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 			if (successOrFailure == 0)
 			{
 				//success
+				AccountAuthentication::AuthenticateAccountSuccess accountSuccess;
+
 			}
 			else
 			{
