@@ -5,7 +5,6 @@
 #include <list>
 #include "Buffer.h"
 #include "Utils.h"
-#include "AccountAuthentication.pb.h"
 
 //#include <Windows.h>
 #include <WinSock2.h>
@@ -347,44 +346,30 @@ void processCommands(std::vector<std::string>& theCommands) {
 			g_theHeader->message_id = 4;
 			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
  
-			//Convert the message into google protocol buffer.
-			requestId = rand() % 1000;
-			AccountAuthentication::CreateAccount account;
-			account.requestid = requestId;
-			account.email = theCommands[1];
-			account.plaintextpassword = theCommands[2];
+			g_theHeader->packet_length = theCommands[0].size();
+			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
+			g_theBuffer->WriteStringBE(theCommands[0]);
+			g_theBuffer->WriteInt32BE(theCommands[1].size());
+			g_theBuffer->WriteStringBE(theCommands[1]);
+			g_theBuffer->WriteInt32BE(theCommands[2].size());
+			g_theBuffer->WriteStringBE(theCommands[2]);
 
-			std::string serializedCreate = "";
-			account.SerializeToString(&serializedCreate);
-
-			//set the packet length
-			g_theBuffer->WriteInt32BE(serializedCreate.size());
-			g_theBuffer->WriteStringBE(serializedCreate);
 
 		}
 
 		if (theCommands[0] == "AUTHENTICATE" || theCommands[0] == "authenticate")
 		{
-			//Registration functionality
-
+			//Authentication functionality
 			g_theHeader = new Header();
 			g_theHeader->message_id = 4;
 			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
-
-			//Convert the message into google protocol buffer.
-			requestId = rand() % 1000;
-			AccountAuthentication::AuthenticateAccount account;
-			account.requestid = requestId;
-			account.email = theCommands[1];
-			account.plaintextpassword = theCommands[2];
-
-			std::string serializedCreate = "";
-			account.SerializeToString(&serializedCreate);
-
-			//set the packet length
-			g_theBuffer->WriteInt32BE(serializedCreate.size());
-			g_theBuffer->WriteStringBE(serializedCreate);
-
+			g_theHeader->packet_length = theCommands[0].size();
+			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
+			g_theBuffer->WriteStringBE(theCommands[0]);
+			g_theBuffer->WriteInt32BE(theCommands[1].size());
+			g_theBuffer->WriteStringBE(theCommands[1]);
+			g_theBuffer->WriteInt32BE(theCommands[2].size);
+			g_theBuffer->WriteStringBE(theCommands[2]);
 		}
 
 	}
