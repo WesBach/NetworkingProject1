@@ -41,7 +41,6 @@ void buildMessage(userInfo& theUser,std::string& message);
 userInfo getClient(SOCKET& theSock);
 void sendServerMessage(SOCKET* sendingUser, std::string message);
 
-
 int g_IDCounter = 0;
 
 int main()
@@ -447,4 +446,30 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 			send(outSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 		}
 	}
+}
+
+#include "AccountAuthentication.pb.h"
+
+void registerUser(std::string userEmail, std::string userPlainTextPassword)
+{
+	AccountAuthentication::AuthenticateAccount userAccount;
+
+	userAccount.set_requestid(4);
+	userAccount.set_email(userEmail);
+	userAccount.set_plaintextpassword(userPlainTextPassword);
+
+	std::string serializedString;
+	userAccount.SerializeToString(&serializedString);
+}
+
+void authenticateUser(SOCKET* userSocket, std::string userEmail, std::string userPlainTextPassword)
+{
+	AccountAuthentication::AuthenticateAccount userAccount;
+
+	userAccount.set_requestid(5);
+	userAccount.set_email(userEmail);
+	userAccount.set_plaintextpassword(userPlainTextPassword);
+
+	std::string serializedString;
+	userAccount.SerializeToString(&serializedString);
 }
