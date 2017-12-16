@@ -178,36 +178,57 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 		messageId = theUser.userBuffer.ReadInt32BE();
 
 		//if the id is 4(Register) or 5(Authenticate)
-		if (messageId == 4)
+		if (messageId == 4)//Register
 		{
+			//get the message
 			messageLength = theUser.userBuffer.ReadInt32BE();
 			message = parseMessage(messageLength, theUser.userBuffer);
 
+			//create the CreateAccount and parse the message
 			AccountAuthentication::CreateAccount account;
 			account.ParseFromString(message);
 
+			//get the add account info from the db
 			addAccountInfo = pTheSQLWrapper->addAccount(account.email(), account.plaintextpassword());
 
 			//returns -1 for server error 
 			//returns 1 for exists
  
-			if (addAccountInfo.first == 0)
+			if (addAccountInfo.first == 0)//success
 			{
-				//message CreateAccountSuccess{
-				//	required uint64 requestId = 1;
-				//required uint64 userId = 2;}
-				//success
+				//create the AuthenticateAccountSuccess object
+				AccountAuthentication::AuthenticateAccountSuccess success;
+				//populate
+				success.set_requestid(account.requestid());
+				success.set_userid(addAccountInfo.second);
+				//serialize the object
+				std::string successSerialize;
+				successSerialize = success.SerializeAsString();
+				//send the success
+				sendAuthenticationServerMessage(g_chatServerInfo, successSerialize, 11);
 			}
-			else if (addAccountInfo.first == 1)
+			else 
 			{
-				//already exists
-			}
-			else {
-				//server error
-			}
+				//create the AuthenticateAccountFailure object and populate it
+				AccountAuthentication::AuthenticateAccountFailure failure;
+				failure.set_requestid(account.requestid());
 
+				if (addAccountInfo.first == 1)
+				{
+					//already exists
+					failure.set_reason(failure.INVALID_CREDENTIALS);
+				}
+				else //server error
+					failure.set_reason(failure.INTERNAL_SERVER_ERROR);
+
+				//serialize and send
+				std::string addFailureSerialize;
+				addFailureSerialize = failure.SerializeAsString();
+				sendAuthenticationServerMessage(g_chatServerInfo, addFailureSerialize, 12);
+
+			}
 		}
-		else if (messageId == 5)
+		else if (messageId == 5) //Authenticate
 		{
 			messageLength = theUser.userBuffer.ReadInt32BE();
 			message = parseMessage(messageLength, theUser.userBuffer);
@@ -222,14 +243,13 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 			if (authAccountInfo.first.first == 0)
 			{
 				//success
-				AccountAuthentication::AuthenticateAccountSuccess accountSuccess;
-				accountSuccess.set_requestid(account.requestid());
+				AccountAuthentication::AuthenticateAccountSuccess authSuccess;
+				authSuccess.set_requestid(account.requestid());
+				authSuccess.set_userid(authAccountInfo.first.first);
 
-				//message AuthenticateAccountSuccess{
-				//	required uint64 requestId = 1;
-				//required uint64 userId = 2;
-				//required string creationDate = 3;
-				//}
+				std::string authSerial = authSuccess.SerializeAsString();
+				//send the message
+				sendAuthenticationServerMessage(g_chatServerInfo, authSerial, 13);
 				
 			}
 			else // authentication failure
@@ -237,21 +257,19 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 				//create and populate failure message
 				AccountAuthentication::AuthenticateAccountFailure authFailure;
 				authFailure.set_requestid(account.requestid());
+
 				if (authAccountInfo.first.first == 1) {
 					//invalid credentials
 					authFailure.set_reason(authFailure.INVALID_CREDENTIALS);
 				}
-				else
-				{
-					//server error
+				else//server error
 					authFailure.set_reason(authFailure.INTERNAL_SERVER_ERROR);
-				}
 
 				//create a string for serialization
-				std::string message;
-				message = authFailure.SerializeAsString();
+				std::string authFailureMessage;
+				authFailureMessage = authFailure.SerializeAsString();
 				//send the failure
-				sendAuthenticationServerMessage(g_chatServerInfo, message,4);
+				sendAuthenticationServerMessage(g_chatServerInfo, authFailureMessage,14);
 			}
 			
 		}

@@ -47,13 +47,13 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 		sql::ResultSet* result  = this->executeSelect(selectLastId);
 		//convert the id to a string for an insert into the next table
 		int userID = result->getInt(1);
-		//std::string userId = std::to_string(result->getInt(1));
+		std::string userId = std::to_string(userID);
 
 		//add the users web_auth info to the database
 		this->execute("INSERT INTO web_auth email,salt,userId,hash values(" + email + "," + salt + "," + userId + "," + hashedPassword + ")");
 		
 		returnInfo.first = 0;
-		returnInfo.first = userId;
+		returnInfo.first = userID;
 		return returnInfo;
 
 	}
