@@ -12,7 +12,8 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "5000"	//was 8899
-#define DEFAULT_BUFFER_LENGTH 1024
+#define DEFAULT_AUTHENTICATION_PORT "6000"	//was 8899
+#define DEFAULT_BUFFER_LENGTH 512
 //socket info structure to store all the individual socket information
 
 //User sockets and buffer struct
@@ -51,12 +52,18 @@ int main()
 	FD_ZERO(&readSet);
 	WSADATA wsaData;
 	struct addrinfo* result = 0;
+	struct addrinfo* ptr = NULL;
 	struct addrinfo addressInfo;
+	struct addrinfo hints;
 	int iResult = 0;
 	int totalSocketsInSet = 0;
 	DWORD flags;
 	DWORD RecvBytes;
 	DWORD SendBytes;
+	//for authentication server
+	SOCKET ConnectSocket = INVALID_SOCKET;
+
+	std::cout << "Chat Server" << std::endl;
 
 	//populating the roomName with rooms (a-z)
 	char *alpha = "abcdefghijklmnopqrstuvwxyz";
@@ -72,15 +79,53 @@ int main()
 	addressInfo.ai_protocol = IPPROTO_TCP;
 	addressInfo.ai_flags = AI_PASSIVE;
 
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		printf("WSAStartup failed: %d\n", iResult);
 		return 1;
 	}
 
+	//get the address info for the authentication server
+	iResult = getaddrinfo(NULL, DEFAULT_AUTHENTICATION_PORT, &hints, &result);
+	if (iResult != 0) {
+		printf("getaddrinfo failed with error: %d\n", iResult);
+		WSACleanup();
+		return 1;
+	}
+	//connect to the authentication server  
+	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+		if (ConnectSocket == INVALID_SOCKET) {
+			printf("socket() failed with error: %d\n", iResult);
+			WSACleanup();
+			return 1;
+		}
+
+		//connect to the socket
+		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		if (iResult == SOCKET_ERROR) {
+			closesocket(ConnectSocket);
+			ConnectSocket = INVALID_SOCKET;
+			continue;
+		}
+		break;
+	}
+
+	freeaddrinfo(result);
+	//Check if the Connected socket is valid
+	if (ConnectSocket == INVALID_SOCKET) {
+		printf("Unable to connect to server\n");
+		WSACleanup();
+		return 1;
+	}
+
 	// Socket()
 	//socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-
 	ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (ListenSocket == INVALID_SOCKET) {
 		printf("socket() failed with error %d\n", WSAGetLastError());
@@ -140,8 +185,12 @@ int main()
 			// Makes things easy for us doing this assignment
 			SOCKET sock = copy.fd_array[i];
 
-			// Is it an inbound communication?
-			if (sock == ListenSocket)
+			if (sock == ConnectSocket) //if its the authentication server
+			{
+				//TODO::
+				//handle the messages from the authentication server.
+			}			
+			else if (sock == ListenSocket)// Is it an inbound connection?
 			{
 				// Accept a new connection
 				SOCKET client = accept(ListenSocket, nullptr, nullptr);
@@ -198,6 +247,11 @@ int main()
 						{
 							leaveRoom(currInfo, results[1][0]);
 						}
+						else if (results[0] == "REGISTER" || results[0] == "register")
+						{
+							//TODO::
+							//the register function
+						}
 					}
 				}
 			}
@@ -237,16 +291,6 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
 	int messageLength = 0;
 	int commandLength = 0;
 	std::vector<std::string> receviedMessages;
-
-	////if the message is just a messg
-	//if (packetLength == 3)
-	//{
-	//	message = "";
-	//	messageId = g_theBuffer->ReadInt32BE();
-	//	messageLength = g_theBuffer->ReadInt32BE();
-
-	//	message = parseMessage(messageLength);
-	//}
 
 	//if the message is specific
 	if (packetLength > 3)

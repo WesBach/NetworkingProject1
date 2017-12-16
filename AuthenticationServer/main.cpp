@@ -1,4 +1,3 @@
-#define UNICODE
 //Authentication server for the chat server to connect to.
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -11,7 +10,7 @@
 #include "SQL_Wrapper.h"
 
 #pragma comment(lib, "Ws2_32.lib")
-#define DEFAULT_PORT "5000"	//was 8899
+#define DEFAULT_PORT "6000"	//was 8899
 //User sockets and buffer struct
 struct userInfo
 {
@@ -32,17 +31,12 @@ std::string parseMessage(int messageLength, Buffer& userBuffer);
 
 int main() {
 	//rework the server code to be here.
-	SOCKET AcceptSocket;
 	fd_set readSet;
-	fd_set writeSet;
 	FD_ZERO(&readSet);
 	WSADATA wsaData;
 	struct addrinfo* result = 0;
 	struct addrinfo addressInfo;
 	int iResult = 0;
-	DWORD flags;
-	DWORD RecvBytes;
-	DWORD SendBytes;
 
 	//create a socket for the server with the port 8899
 	ZeroMemory(&addressInfo, sizeof(addressInfo));
@@ -92,9 +86,8 @@ int main() {
 	FD_ZERO(&master);
 	FD_SET(ListenSocket, &master);
 
-	//for debugging
-	char tempBreak;
 	bool running = true;
+	std::cout << "Authentication Server\nStatus: Running\n" << std::endl;
 
 	while (running)
 	{
@@ -114,6 +107,7 @@ int main() {
 			// Is it an inbound communication?
 			if (sock == ListenSocket)
 			{
+				std::vector<std::string> results;
 				// Accept a new connection
 				g_chatServerInfo.userSocket = accept(ListenSocket, nullptr, nullptr);
 
@@ -123,20 +117,24 @@ int main() {
 				// Add the new connection to the list of connected clients
 				FD_SET(g_chatServerInfo.userSocket, &master);
 
-				// Send a welcome message to the connected client
-				std::string welcomeMsg = "Connected to the authentication server!";
-				//send(client, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
-				sendAuthenticationServerMessage(g_chatServerInfo, welcomeMsg);
-			}
-			else // It's an inbound message
-			{
+				std::cout << "Chat server successfully connected!";
+				
 				// Receive message
 				int bytesIn;
 				bytesIn = recv(sock, g_chatServerInfo.userBuffer.getBufferAsCharArray(), g_chatServerInfo.userBuffer.GetBufferLength(), 0);
+				if (bytesIn > 0)
+				{
+					//do the conversion
+					std::vector<std::string> results = readPacket(g_chatServerInfo, bytesIn);
+				}
+				else if (bytesIn == -1) {//print error message
 
+				}
+				else if (bytesIn == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {//print error message
+					printf("receive failed with error: %i", WSAGetLastError());
+				}
 				// Send message to other clients, and definately NOT the listening socket
-				std::vector<std::string> results = readPacket(g_chatServerInfo, bytesIn);
-
+				
 
 				if (results.size() > 1)
 				{
@@ -145,12 +143,13 @@ int main() {
 					{
 						//TODO::
 						//register the user
+					
 					}
-				}
-			}
-		}
-	}
-	//use the info to add or authenticate the 
+				}//end if
+			}//end if
+		}//end for 
+	}//end else
+
 }
 
 

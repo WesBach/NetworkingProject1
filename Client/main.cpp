@@ -1,10 +1,11 @@
-
-#include "Buffer.h"
-#include "Utils.h"
+#include <ctime>
 #include <string>
 #include <iostream>
 #include <conio.h>
 #include <list>
+#include "Buffer.h"
+#include "Utils.h"
+#include "AccountAuthentication.pb.h"
 
 //#include <Windows.h>
 #include <WinSock2.h>
@@ -33,9 +34,14 @@ std::vector<std::string> theCommands;
 std::list<std::string> screenMessages;
 void populateScreenData(std::string message);
 void printScreen();
+int requestId = 0;
 
 //TO DO: Client side connection
 int main(int argc, char** argv) {
+
+	//randomly generate a request id between 0 - 1000;
+	srand(time(0));
+
 	g_theBuffer = new Buffer();
 	g_theHeader = new Header();
 	WSADATA wsaData;
@@ -275,26 +281,15 @@ void printScreen()
 void processCommands(std::vector<std::string>& theCommands) {
 	if (theCommands.size() > 0)
 	{
+		//LR = 3
+		//JR = 2
+		//SM = 1
+		//REGISTER = 4
+		//AUTHENTICATE = 5
+
 		//if the command is to leave room
 		if (theCommands[0] == "LR" || theCommands[0] == "lr")
 		{
-			////Create the header with massageType
-			//g_theHeader = new Header();
-			//g_theHeader->message_id = 3;
-
-			////Get the size of everything going in the message
-			//g_theHeader->packet_length += sizeof(g_theHeader->message_id);
-			//g_theHeader->packet_length += theCommands[0].length() * sizeof(char);
-			//g_theHeader->packet_length += theCommands[1].length() * sizeof(char);
-			//g_theHeader->packet_length += (theCommands[0].length() * sizeof(char)) + (theCommands[1].length() * sizeof(char));
-
-			////Write everything into the buffer (packet length, messageID, commandLength, command, messageLength, message)
-			//g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
-			//g_theBuffer->WriteInt32BE(g_theHeader->message_id);
-			//g_theBuffer->WriteInt32BE(theCommands[0].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[0]);
-			//g_theBuffer->WriteInt32BE(theCommands[1].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[1]);
 
 			//Create the header with massageType
 			g_theHeader = new Header();
@@ -313,24 +308,6 @@ void processCommands(std::vector<std::string>& theCommands) {
 		//if the command is to join room
 		if (theCommands[0] == "JR" || theCommands[0] == "jr")
 		{
-			////Create the header with massageType
-			//g_theHeader = new Header();
-			//g_theHeader->message_id = 2;
-
-			////Get the size of everything going in the message
-			//g_theHeader->packet_length += sizeof(g_theHeader->message_id);
-			//g_theHeader->packet_length += theCommands[0].length() * sizeof(char);
-			//g_theHeader->packet_length += theCommands[1].length() * sizeof(char);
-			//g_theHeader->packet_length += (theCommands[0].length() * sizeof(char)) + (theCommands[1].length() * sizeof(char));
-
-			////Write everything into the buffer (packet length, messageID, commandLength, command, messageLength, message)
-			//g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
-			//g_theBuffer->WriteInt32BE(g_theHeader->message_id);
-			//g_theBuffer->WriteInt32BE(theCommands[0].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[0]);
-			//g_theBuffer->WriteInt32BE(theCommands[1].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[1]);
-
 
 			g_theHeader = new Header();
 			g_theHeader->message_id = 2;
@@ -351,25 +328,6 @@ void processCommands(std::vector<std::string>& theCommands) {
 		//if the command is to send message
 		if (theCommands[0] == "SM" || theCommands[0] == "sm")
 		{
-			////Create the header with massageType
-			//g_theHeader = new Header();
-			//g_theHeader->message_id = 1;
-
-			////Get the size of everything going in the message
-			//g_theHeader->packet_length += sizeof(g_theHeader->message_id);
-			//g_theHeader->packet_length += theCommands[0].length() * sizeof(char);
-			//g_theHeader->packet_length += theCommands[1].length() * sizeof(char);
-			//g_theHeader->packet_length += (theCommands[0].length() * sizeof(char)) + (theCommands[1].length() * sizeof(char));
-
-			////Write everything into the buffer (packet length, messageID, commandLength, command, messageLength, message)
-			//g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
-			//g_theBuffer->WriteInt32BE(g_theHeader->message_id);
-			//g_theBuffer->WriteInt32BE(theCommands[0].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[0]);
-			//g_theBuffer->WriteInt32BE(theCommands[1].length() * sizeof(char));
-			//g_theBuffer->WriteStringBE(theCommands[1]);
-
-
 			g_theHeader = new Header();
 			g_theHeader->message_id = 1;
 			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
@@ -378,6 +336,55 @@ void processCommands(std::vector<std::string>& theCommands) {
 			g_theBuffer->WriteStringBE(theCommands[0]);
 			g_theBuffer->WriteInt32BE(theCommands[1].size());
 			g_theBuffer->WriteStringBE(theCommands[1]);
+		}
+
+		if (theCommands[0] == "REGISTER" || theCommands[0] == "register")
+		{
+			//Registration functionality
+
+
+			g_theHeader = new Header();
+			g_theHeader->message_id = 4;
+			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
+ 
+			//Convert the message into google protocol buffer.
+			requestId = rand() % 1000;
+			AccountAuthentication::CreateAccount account;
+			account.requestid = requestId;
+			account.email = theCommands[1];
+			account.plaintextpassword = theCommands[2];
+
+			std::string serializedCreate = "";
+			account.SerializeToString(&serializedCreate);
+
+			//set the packet length
+			g_theBuffer->WriteInt32BE(serializedCreate.size());
+			g_theBuffer->WriteStringBE(serializedCreate);
+
+		}
+
+		if (theCommands[0] == "AUTHENTICATE" || theCommands[0] == "authenticate")
+		{
+			//Registration functionality
+
+			g_theHeader = new Header();
+			g_theHeader->message_id = 4;
+			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
+
+			//Convert the message into google protocol buffer.
+			requestId = rand() % 1000;
+			AccountAuthentication::AuthenticateAccount account;
+			account.requestid = requestId;
+			account.email = theCommands[1];
+			account.plaintextpassword = theCommands[2];
+
+			std::string serializedCreate = "";
+			account.SerializeToString(&serializedCreate);
+
+			//set the packet length
+			g_theBuffer->WriteInt32BE(serializedCreate.size());
+			g_theBuffer->WriteStringBE(serializedCreate);
+
 		}
 
 	}
