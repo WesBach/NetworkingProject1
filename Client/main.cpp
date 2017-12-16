@@ -368,10 +368,9 @@ void processCommands(std::vector<std::string>& theCommands) {
 			g_theBuffer->WriteStringBE(theCommands[0]);
 			g_theBuffer->WriteInt32BE(theCommands[1].size());
 			g_theBuffer->WriteStringBE(theCommands[1]);
-			g_theBuffer->WriteInt32BE(theCommands[2].size);
+			g_theBuffer->WriteInt32BE(theCommands[2].size());
 			g_theBuffer->WriteStringBE(theCommands[2]);
 		}
-
 	}
 }
 

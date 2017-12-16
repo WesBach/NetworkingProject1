@@ -16,13 +16,14 @@ public:
 	//returns -1 for server error 
 	//returns 1 for exists
 	//returns 0 for added 
-	int addAccount(std::string email,std::string password);
+	std::pair<int,int> addAccount(std::string email,std::string password);
 
 	//authenticate the account
-	//returns -1 for server error 
-	//returns 1 for invalid credentials
-	//returns 0 for success 
-	int authenticateAccount(std::string email, std::string password);
+	// -1 for server error 
+	// 1 for invalid credentials
+	// 0 for success 
+	//first int is above, second int is the userid, string is the date created
+	std::pair<std::pair<int,int>,std::string> authenticateAccount(std::string email, std::string password);
 
 	bool execute(const std::string& statement);
 	sql::ResultSet* executeSelect(const std::string& statement);
