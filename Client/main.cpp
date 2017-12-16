@@ -361,7 +361,7 @@ void processCommands(std::vector<std::string>& theCommands) {
 		{
 			//Authentication functionality
 			g_theHeader = new Header();
-			g_theHeader->message_id = 4;
+			g_theHeader->message_id = 5;
 			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
 			g_theHeader->packet_length = theCommands[0].size();
 			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);

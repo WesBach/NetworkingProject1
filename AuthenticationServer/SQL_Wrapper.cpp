@@ -1,13 +1,6 @@
 #include "SQL_Wrapper.h"
 #include "Utility.h"
-
-SQL_Wrapper::SQL_Wrapper() {
-}
-
-SQL_Wrapper::~SQL_Wrapper() {
-	//close the connection
-	connection->close();
-}
+SQL_Wrapper* SQL_Wrapper::theWrapper = nullptr;
 
 void SQL_Wrapper::connectToDB()
 {
@@ -26,6 +19,9 @@ void SQL_Wrapper::connectToDB()
 
 int SQL_Wrapper::addAccount(std::string email, std::string password)
 {
+	//returns -1 for server error 
+	//returns 1 for exists
+	//returns 0 for added
 	std::string fetchUserByEmail = "SELECT * FROM user WHERE email = " + email;
 	sql::ResultSet* result = this->executeSelect(fetchUserByEmail);
 
@@ -58,8 +54,12 @@ int SQL_Wrapper::addAccount(std::string email, std::string password)
 	return -1;
 }
 
-bool SQL_Wrapper::authenticateAccount(std::string email, std::string password)
+int SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 {
+	//returns -1 for server error 
+	//returns 1 for invalid credentials
+	//returns 0 for success 
+
 	//find the user by it's email
 	std::string selectUserByEmail = "SELECT * FROM user WHERE email =" + email;
 	sql::ResultSet* userResult = this->executeSelect(selectUserByEmail);
@@ -81,13 +81,13 @@ bool SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 		if (hashString.compare(tempPass))
 		{
 			//they match and were good to go
-			return true;
+			return 0;
 		}
 		else
-			return false;
+			return 1;
 	}
 
-	return false;
+	return -1;
 }
 
 bool SQL_Wrapper::execute(const std::string& statement)
@@ -126,6 +126,16 @@ int SQL_Wrapper::executeUpdate(const std::string& statement)
 		return false;
 	}
 	return false;
+}
+
+SQL_Wrapper * SQL_Wrapper::getInstance()
+{
+	if (SQL_Wrapper::theWrapper == nullptr)
+	{
+		SQL_Wrapper::theWrapper = new SQL_Wrapper();
+	}
+
+	return SQL_Wrapper::theWrapper;
 }
 
 sql::ResultSet* SQL_Wrapper::executeSelect(const std::string& statement) {

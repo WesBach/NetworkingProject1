@@ -8,6 +8,7 @@
 
 #include "Buffer.h"
 #include "SQL_Wrapper.h"
+#include "AccountAuthentication.pb.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "6000"	//was 8899
@@ -29,8 +30,12 @@ void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message)
 std::vector<std::string> readPacket(userInfo& theUser, int packetLength);
 std::string parseMessage(int messageLength, Buffer& userBuffer);
 
+SQL_Wrapper* pTheSQLWrapper;
+
 int main() {
-	//rework the server code to be here.
+	//singleton SQL_Wrapper
+	pTheSQLWrapper->getInstance();
+	
 	fd_set readSet;
 	FD_ZERO(&readSet);
 	WSADATA wsaData;
@@ -159,7 +164,6 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 	std::string command = "";
 	int messageId = 0;
 	int messageLength = 0;
-	int commandLength = 0;
 	std::vector<std::string> receviedMessages;
 
 	//if the message is specific
@@ -168,19 +172,73 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 		message = "";
 		//read the packet id and the command length
 		messageId = theUser.userBuffer.ReadInt32BE();
-		//get the command length
-		commandLength = theUser.userBuffer.ReadInt32BE();
-		//read the command 
-		command = parseMessage(commandLength, theUser.userBuffer);
-		//get message length
-		messageLength = theUser.userBuffer.ReadInt32BE();
-		//get message
-		message = parseMessage(messageLength, theUser.userBuffer);
-		//push back the messages
-		receviedMessages.push_back(command);
-		receviedMessages.push_back(message);
-	}
 
+		//if the id is 4(Register) or 5(Authenticate)
+		if (messageId == 4)
+		{
+			messageLength = theUser.userBuffer.ReadInt32BE();
+			message = parseMessage(messageLength, theUser.userBuffer);
+
+			AccountAuthentication::CreateAccount account;
+			account.ParseFromString(message);
+
+			int successOrFailure = pTheSQLWrapper->addAccount(account.email(), account.plaintextpassword());
+
+			//returns -1 for server error 
+			//returns 1 for exists
+
+			//TODO:: create function to do this 
+			if (successOrFailure == 0)
+			{
+				//success
+			}
+			else if (successOrFailure == 1)
+			{
+				//already exists
+			}
+			else {
+				//server error
+			}
+
+		}
+		else if (messageId == 5)
+		{
+			messageLength = theUser.userBuffer.ReadInt32BE();
+			message = parseMessage(messageLength, theUser.userBuffer);
+
+			AccountAuthentication::AuthenticateAccount account;
+			account.ParseFromString(message);
+
+			int successOrFailure = pTheSQLWrapper->authenticateAccount(account.email(), account.plaintextpassword());
+
+
+			//TODO:: create function to do this 
+			if (successOrFailure == 0)
+			{
+				//success
+			}
+			else
+			{
+				//create and populate failure message
+				AccountAuthentication::AuthenticateAccountFailure authFailure;
+				authFailure.set_requestid(account.requestid());
+				if (successOrFailure == 1) {
+					//invalid credentials
+					authFailure.set_reason(authFailure.INVALID_CREDENTIALS);
+				}
+				else
+				{
+					//server error
+					authFailure.set_reason(authFailure.INTERNAL_SERVER_ERROR);
+				}
+				
+			}
+			
+		}
+
+		//get the command length
+
+	}
 	return receviedMessages;
 }
 
