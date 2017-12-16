@@ -9,10 +9,9 @@
 #include "Buffer.h"
 #include "SQL_Wrapper.h"
 #include "AccountAuthentication.pb.h"
-#include "AccountAuthentication.pb.h"
 
 #pragma comment(lib, "Ws2_32.lib")
-#define DEFAULT_PORT "6000"	//was 8899
+#define DEFAULT_PORT "6000"
 //User sockets and buffer struct
 struct userInfo
 {
@@ -26,8 +25,8 @@ Buffer* g_theBuffer = new Buffer();
 userInfo g_chatServerInfo;
 
 //functions
-void buildMessage(userInfo& theUser, std::string& message);
-void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message);
+void buildMessage(userInfo& theUser, std::string& message,int messageType);
+void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType);
 std::vector<std::string> readPacket(userInfo& theUser, int packetLength);
 std::string parseMessage(int messageLength, Buffer& userBuffer);
 
@@ -35,8 +34,10 @@ SQL_Wrapper* pTheSQLWrapper;
 
 int main() {
 	//singleton SQL_Wrapper
-	pTheSQLWrapper->getInstance();
-	
+	pTheSQLWrapper = pTheSQLWrapper->getInstance();
+	//connect to the db.
+	pTheSQLWrapper->connectToDB();
+
 	fd_set readSet;
 	FD_ZERO(&readSet);
 	WSADATA wsaData;
@@ -166,9 +167,11 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 	int messageId = 0;
 	int messageLength = 0;
 	std::vector<std::string> receviedMessages;
+	std::pair<int, int> addAccountInfo(-2,-1);
+	std::pair<std::pair<int, int>,std::string> authAccountInfo(std::pair<int, int>(-2, -1),"");
 
 	//if the message is specific
-	if (packetLength > 3)
+	if (packetLength > 4)
 	{
 		message = "";
 		//read the packet id and the command length
@@ -183,17 +186,19 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 			AccountAuthentication::CreateAccount account;
 			account.ParseFromString(message);
 
-			int successOrFailure = pTheSQLWrapper->addAccount(account.email(), account.plaintextpassword());
+			addAccountInfo = pTheSQLWrapper->addAccount(account.email(), account.plaintextpassword());
 
 			//returns -1 for server error 
 			//returns 1 for exists
-
-			//TODO:: create function to do this 
-			if (successOrFailure == 0)
+ 
+			if (addAccountInfo.first == 0)
 			{
+				//message CreateAccountSuccess{
+				//	required uint64 requestId = 1;
+				//required uint64 userId = 2;}
 				//success
 			}
-			else if (successOrFailure == 1)
+			else if (addAccountInfo.first == 1)
 			{
 				//already exists
 			}
@@ -210,22 +215,29 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 			AccountAuthentication::AuthenticateAccount account;
 			account.ParseFromString(message);
 
-			int successOrFailure = pTheSQLWrapper->authenticateAccount(account.email(), account.plaintextpassword());
+			authAccountInfo = pTheSQLWrapper->authenticateAccount(account.email(), account.plaintextpassword());
 
 
-			//TODO:: create function to do this 
-			if (successOrFailure == 0)
+			//authentication success
+			if (authAccountInfo.first.first == 0)
 			{
 				//success
 				AccountAuthentication::AuthenticateAccountSuccess accountSuccess;
+				accountSuccess.set_requestid(account.requestid());
 
+				//message AuthenticateAccountSuccess{
+				//	required uint64 requestId = 1;
+				//required uint64 userId = 2;
+				//required string creationDate = 3;
+				//}
+				
 			}
-			else
+			else // authentication failure
 			{
 				//create and populate failure message
 				AccountAuthentication::AuthenticateAccountFailure authFailure;
 				authFailure.set_requestid(account.requestid());
-				if (successOrFailure == 1) {
+				if (authAccountInfo.first.first == 1) {
 					//invalid credentials
 					authFailure.set_reason(authFailure.INVALID_CREDENTIALS);
 				}
@@ -234,21 +246,25 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 					//server error
 					authFailure.set_reason(authFailure.INTERNAL_SERVER_ERROR);
 				}
-				
+
+				//create a string for serialization
+				std::string message;
+				message = authFailure.SerializeAsString();
+				//send the failure
+				sendAuthenticationServerMessage(g_chatServerInfo, message,4);
 			}
 			
 		}
 
 		//get the command length
-
 	}
 	return receviedMessages;
 }
 
-void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message) {
+void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType) {
 	//server message happens when client joins the server?
 	//userInfo theUser = getClient(*sendingUser);
-	buildMessage(sendingUser, message);
+	buildMessage(sendingUser, message,messageType);
 
 	int res = send(sendingUser.userSocket, sendingUser.userBuffer.getBufferAsCharArray(), sendingUser.userBuffer.GetBufferLength(), 0);
 	if (res == SOCKET_ERROR)
@@ -258,10 +274,14 @@ void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message)
 }
 
 
-void buildMessage(userInfo& theUser, std::string& message)
+void buildMessage(userInfo& theUser, std::string& message,int messageType)
 {
 	theUser.userBuffer = Buffer();
+	//write the id
+	theUser.userBuffer.WriteInt32BE(messageType);
+	//write the packet size
 	theUser.userBuffer.WriteInt32BE(message.size());
+	//write the message
 	theUser.userBuffer.WriteStringBE(message);
 }
 

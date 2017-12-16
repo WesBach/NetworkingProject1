@@ -371,7 +371,6 @@ void processCommands(std::vector<std::string>& theCommands) {
 			g_theBuffer->WriteInt32BE(theCommands[2].size());
 			g_theBuffer->WriteStringBE(theCommands[2]);
 		}
-
 	}
 }
 

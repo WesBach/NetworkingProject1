@@ -17,17 +17,19 @@ void SQL_Wrapper::connectToDB()
 	}
 }
 
-int SQL_Wrapper::addAccount(std::string email, std::string password)
+std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string password)
 {
 	//returns -1 for server error 
 	//returns 1 for exists
 	//returns 0 for added
+	std::pair<int, int> returnInfo(-1,-1);
 	std::string fetchUserByEmail = "SELECT * FROM user WHERE email = " + email;
 	sql::ResultSet* result = this->executeSelect(fetchUserByEmail);
 
 	if (result)
 	{
-		return 1;
+		returnInfo.first = 1;
+		return returnInfo;
 	}
 	else
 	{
@@ -44,24 +46,35 @@ int SQL_Wrapper::addAccount(std::string email, std::string password)
 		std::string selectLastId = "SELECT LAST_INSERT_ID()";
 		sql::ResultSet* result  = this->executeSelect(selectLastId);
 		//convert the id to a string for an insert into the next table
-		std::string userId = std::to_string(result->getInt(1));
+		int userID = result->getInt(1);
+		//std::string userId = std::to_string(result->getInt(1));
 
 		//add the users web_auth info to the database
 		this->execute("INSERT INTO web_auth email,salt,userId,hash values(" + email + "," + salt + "," + userId + "," + hashedPassword + ")");
+		
+		returnInfo.first = 0;
+		returnInfo.first = userId;
+		return returnInfo;
 
 	}
-	delete statement;
-	return -1;
+
+
+	returnInfo.first = -1;
+	return returnInfo;
 }
 
-int SQL_Wrapper::authenticateAccount(std::string email, std::string password)
+std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 {
-	//returns -1 for server error 
-	//returns 1 for invalid credentials
-	//returns 0 for success 
+	// -1 for server error 
+	// 1 for invalid credentials
+	// 0 for success 
+	std::pair<std::pair<int, int>, std::string> returnInfo;
+	returnInfo.second = "";
+	returnInfo.first.second = -1;
 
 	//find the user by it's email
 	std::string selectUserByEmail = "SELECT * FROM user WHERE email =" + email;
+	selectUserByEmail += ";";
 	sql::ResultSet* userResult = this->executeSelect(selectUserByEmail);
 
 	//TODO::
@@ -69,6 +82,7 @@ int SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 	if (userResult->rowsCount() == 1)
 	{
 		//get the user salt
+		int userId = userResult->getInt(4);
 		std::string salt = userResult->getString(3);
 		std::string hash = userResult->getString(5);
 
@@ -78,16 +92,41 @@ int SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 		//convert the char* to a string
 		std::string hashString(hashedPassword);
 
+		//required uint64 userId = 2;
+		//required string creationDate = 3;
+
 		if (hashString.compare(tempPass))
 		{
 			//they match and were good to go
-			return 0;
+			returnInfo.first.first =  0;
+			std::string getUserById = "SELECT * FROM user WHERE id =" + userId;
+			getUserById += ";";
+
+			sql::ResultSet* theUser;
+			theUser = executeSelect(getUserById);
+
+			if (theUser->rowsCount() == 1)
+			{
+				//populate the pair
+				returnInfo.first.second = theUser->getInt(1);
+				returnInfo.second = theUser->getString(3);
+
+				//update the last login 
+				std::string update = "UPDATE user WHERE id = " + userId;
+				update += " SET last_login= now();";
+				executeUpdate(update);
+
+				return returnInfo;
+			}
 		}
 		else
-			return 1;
+		{
+			returnInfo.first.first = 1;
+			return returnInfo;
+		}
 	}
-
-	return -1;
+	returnInfo.first.first = 1;
+	return returnInfo;
 }
 
 bool SQL_Wrapper::execute(const std::string& statement)
