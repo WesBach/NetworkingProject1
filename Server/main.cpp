@@ -29,6 +29,7 @@ std::map<char, std::vector<userInfo*>> roomMap;
 std::vector<userInfo> usersInServer;
 fd_set master;
 SOCKET ListenSocket;
+SOCKET ConnectSocket;
 Buffer* g_theBuffer = new Buffer();
 std::string parseMessage(int messageLength, Buffer& userBuffer);
 
@@ -60,7 +61,7 @@ int main()
 	DWORD RecvBytes;
 	DWORD SendBytes;
 	//for authentication server
-	SOCKET ConnectSocket = INVALID_SOCKET;
+	ConnectSocket = INVALID_SOCKET;
 
 	std::cout << "Chat Server" << std::endl;
 
