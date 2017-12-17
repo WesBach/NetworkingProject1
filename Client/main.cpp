@@ -116,10 +116,11 @@ int main(int argc, char** argv) {
 	print_text("=======================================");
 	print_text("		Commands:              ");
 	print_text("=======================================");
-	print_text("Leave Room: LR (a-z)");
 	print_text("Join Room: JR (a-z)");
+	print_text("Leave Room: LR (a-z)");
 	print_text("Send Message: SM (followed by message)");
-
+	print_text("Register Account: register (Email) (Password)");
+	print_text("Login: authenticate (Email) (Password)");
 	print_text("Connected to Server");
 
 	//string for user input
@@ -130,18 +131,13 @@ int main(int argc, char** argv) {
 	int smFind = -1;
 	int lrFind = -1;
 	int jrFind = -1;
+	int raFind = -1;
+	int auFind = -1;
 	int bytesReceived = 0;
 
 	while (true)
 	{
 		start_text();
-		//userInputA = "";	
-		//userInputB = "";
-		//std::cout << "> ";
-		//std::cin >> userInputA;
-		//std::cin >> userInputB;
-		//theCommands.push_back(userInputA);
-		//theCommands.push_back(userInputB);
 
 		if (_kbhit()) {
 			char c = _getch();
@@ -151,10 +147,13 @@ int main(int argc, char** argv) {
 				//no error checking for the room after (right now assume that its correct)
 				if (userInput.length() > 3)
 				{
-					smFind = userInput.find("SM ");
-					jrFind = userInput.find("JR ");
-					lrFind = userInput.find("LR ");
+					smFind = userInput.find("SM "); //Send Message
+					jrFind = userInput.find("JR "); //Join Room
+					lrFind = userInput.find("LR "); //Leave Room
+					raFind = userInput.find("RA "); //Register Account
+					auFind = userInput.find("AU");	//Authenticate User
 
+					//Get the commands for Join Room
 					if (jrFind >= 0)
 					{
 						command = userInput.substr(0, 2);
@@ -166,6 +165,7 @@ int main(int argc, char** argv) {
 						userInput = "";
 					}
 
+					//Get the commands for Send Message
 					if (smFind >= 0)
 					{
 						command = userInput.substr(0, 2);
@@ -177,6 +177,7 @@ int main(int argc, char** argv) {
 						userInput = "";
 					}
 
+					//Get the commands for Leave Room
 					if (lrFind >= 0)
 					{
 						command = userInput.substr(0, 2);
@@ -186,6 +187,18 @@ int main(int argc, char** argv) {
 						theCommands.push_back(roomName);
 						isMessagePopulated = true;
 						userInput = "";
+					}
+
+					//Get the commands for Register Account
+					if (raFind >= 0)
+					{
+
+					}
+
+					//Get the commands for Authenticate User
+					if (auFind >= 0)
+					{
+
 					}
 					
 				}			
