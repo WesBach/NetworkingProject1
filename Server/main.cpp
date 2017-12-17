@@ -249,8 +249,8 @@ int main()
 						}
 						else if (results[0] == "REGISTER" || results[0] == "register")
 						{
-							//TODO::
-							//the register function
+							//TODO: Need to find a proper way to populate both the email and password.
+							//registerUser()
 						}
 					}
 				}
@@ -454,23 +454,51 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 void registerUser(std::string userEmail, std::string userPlainTextPassword)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
+	g_theBuffer->getBuffer();
 
-	userAccount.set_requestid(4);
+	//set the messageID
+	g_theBuffer->WriteInt32BE(4);
+
+	//Set the Length of the message
+	g_theBuffer->WriteInt32BE(userEmail.length + userPlainTextPassword.length);
+
+	//Add the user credentials to the userAccount Object
 	userAccount.set_email(userEmail);
 	userAccount.set_plaintextpassword(userPlainTextPassword);
 
+	//Serialize the userAccount to a string
 	std::string serializedString;
 	userAccount.SerializeToString(&serializedString);
+
+	//Add the serialized string to the globel buffer
+	g_theBuffer->WriteStringBE(serializedString);
+
+	//Send the populated buffer to the auth server
+	send(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
 
-void authenticateUser(SOCKET* userSocket, std::string userEmail, std::string userPlainTextPassword)
+void authenticateUser(std::string userEmail, std::string userPlainTextPassword)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
+	g_theBuffer->getBuffer();
 
-	userAccount.set_requestid(5);
+	//set the messageID
+	g_theBuffer->WriteInt32BE(5);
+
+	//Set the Length of the message
+	g_theBuffer->WriteInt32BE(userEmail.length + userPlainTextPassword.length);
+
+	//Add the user credentials to the userAccount Object
 	userAccount.set_email(userEmail);
 	userAccount.set_plaintextpassword(userPlainTextPassword);
 
+	//Serialize the userAccount to a string
 	std::string serializedString;
 	userAccount.SerializeToString(&serializedString);
+
+	//Add the serialized string to the globel buffer
+	g_theBuffer->WriteStringBE(serializedString);
+
+	//Send the populated buffer to the auth server
+	send(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
