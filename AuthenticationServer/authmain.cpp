@@ -34,9 +34,11 @@ SQL_Wrapper* pTheSQLWrapper;
 
 int main() {
 	//singleton SQL_Wrapper
-	pTheSQLWrapper = pTheSQLWrapper->getInstance();
+	//pTheSQLWrapper = pTheSQLWrapper->getInstance();
+	pTheSQLWrapper = new SQL_Wrapper();
 	//connect to the db.
 	pTheSQLWrapper->connectToDB();
+	g_chatServerInfo.userSocket = NULL;
 
 	fd_set readSet;
 	FD_ZERO(&readSet);
@@ -105,43 +107,49 @@ int main() {
 		fd_set copy = master; 
 		int socketCount = select(0, &copy, nullptr, nullptr, 0);
 
-		//should only be one.
-		for (int i = 0; i < socketCount; i++)
+		if (g_chatServerInfo.userSocket == NULL)
 		{
-			// Makes things easy for us doing this assignment
-			SOCKET sock = copy.fd_array[i];
-
-			// Is it an inbound communication?
-			if (sock == ListenSocket)
+			for (int i = 0; i < socketCount; i++)
 			{
-				std::vector<std::string> results;
-				// Accept a new connection
-				g_chatServerInfo.userSocket = accept(ListenSocket, nullptr, nullptr);
+				// Makes things easy for us doing this assignment
+				SOCKET sock = copy.fd_array[i];
 
-				//Create the userInfo struct and make a new buffer for it
-				g_chatServerInfo.userBuffer = Buffer();
-
-				// Add the new connection to the list of connected clients
-				FD_SET(g_chatServerInfo.userSocket, &master);
-
-				std::cout << "Chat server successfully connected!";
-				
-				// Receive message
-				int bytesIn;
-				bytesIn = recv(sock, g_chatServerInfo.userBuffer.getBufferAsCharArray(), g_chatServerInfo.userBuffer.GetBufferLength(), 0);
-				if (bytesIn > 0)
+				// Is it an inbound communication?
+				if (sock == ListenSocket)
 				{
-					readPacket(g_chatServerInfo,bytesIn);
-				}
-				else if (bytesIn == -1) {//print error message
+					std::vector<std::string> results;
+					// Accept a new connection
+					g_chatServerInfo.userSocket = accept(ListenSocket, nullptr, nullptr);
 
-				}
-				else if (bytesIn == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {//print error message
-					printf("receive failed with error: %i", WSAGetLastError());
-				}
-				// Send message to other clients, and definately NOT the listening socket
-			}//end if
-		}//end for 
+					//Create the userInfo struct and make a new buffer for it
+					g_chatServerInfo.userBuffer = Buffer();
+
+					// Add the new connection to the list of connected clients
+					FD_SET(g_chatServerInfo.userSocket, &master);
+
+					std::cout << "Chat server successfully connected!";
+				}//end if
+			}//end for 
+		}
+		else {
+			// Receive message
+			int bytesIn;
+
+			bytesIn = recv(g_chatServerInfo.userSocket, g_chatServerInfo.userBuffer.getBufferAsCharArray(), g_chatServerInfo.userBuffer.GetBufferLength(), 0);
+			if (bytesIn > 0)
+			{
+				readPacket(g_chatServerInfo, bytesIn);
+			}
+			else if (bytesIn == -1) {//print error message
+
+			}
+			else if (bytesIn == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {//print error message
+				printf("receive failed with error: %i", WSAGetLastError());
+			}
+
+		}
+		//should only be one.
+		
 	}//end else
 }
 

@@ -115,8 +115,8 @@ int main(int argc, char** argv) {
 	print_text("Join Room: JR (a-z)");
 	print_text("Leave Room: LR (a-z)");
 	print_text("Send Message: SM (followed by message)");
-	print_text("Register Account: register (Email) (Password)");
-	print_text("Login: authenticate (Email) (Password)");
+	print_text("Register Account: REGISTER (Email) (Password)");
+	print_text("Login: AUTHENTICATE (Email) (Password)");
 	print_text("Connected to Server");
 
 	//string for user input
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 	int smFind = -1;
 	int lrFind = -1;
 	int jrFind = -1;
-	int raFind = -1;
+	int ruFind = -1;
 	int auFind = -1;
 	int bytesReceived = 0;
 
@@ -148,8 +148,8 @@ int main(int argc, char** argv) {
 					smFind = userInput.find("SM "); //Send Message
 					jrFind = userInput.find("JR "); //Join Room
 					lrFind = userInput.find("LR "); //Leave Room
-					raFind = userInput.find("register"); //Register Account
-					auFind = userInput.find("authenticate");	//Authenticate User
+					ruFind = userInput.find("REGISTER"); //Register Account
+					auFind = userInput.find("AUTHENTICATE");	//Authenticate User
 
 					//Get the commands for Join Room
 					if (jrFind >= 0)
@@ -188,10 +188,10 @@ int main(int argc, char** argv) {
 					}
 
 					//Get the commands for Register Account
-					if (raFind >= 0)
+					if (ruFind >= 0)
 					{
 						command = userInput.substr(0, 8);
-						email = userInput.substr(9, userInput.find(' ') - 3);
+						email = userInput.substr(9, userInput.find(' ') - 5);
 						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
 						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
 
@@ -205,10 +205,10 @@ int main(int argc, char** argv) {
 					//Get the commands for Authenticate User
 					if (auFind >= 0)
 					{
-						command = userInput.substr(0, 8);
-						email = userInput.substr(8, userInput.find(' ') - 3);
+						command = userInput.substr(0, 12);
+						email = userInput.substr(12, userInput.find(' ') - 5);
 						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
-						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
+						password = userInput.substr(command.length() + email.length() + 1, (userInput.length() - command.length()) - email.length());
 
 						theCommands.push_back(command);
 						theCommands.push_back(email);

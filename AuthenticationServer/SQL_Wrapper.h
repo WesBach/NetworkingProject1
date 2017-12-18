@@ -28,11 +28,11 @@ public:
 	bool execute(const std::string& statement);
 	sql::ResultSet* executeSelect(const std::string& statement);
 	int executeUpdate(const std::string& statement);
-	static SQL_Wrapper* getInstance();
+	//static SQL_Wrapper* getInstance();
 
 private:
-	SQL_Wrapper() {};
-	static SQL_Wrapper* theWrapper;
+	//SQL_Wrapper() {};
+	//static SQL_Wrapper* theWrapper;
 	//private driver and connection
 	//only the wrapper needs to know these
 	sql::Statement* statement;

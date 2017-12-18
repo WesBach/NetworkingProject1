@@ -33,11 +33,10 @@ std::string createSalt()
 }
 
 char * createHash(char* pass) {
-	char * hash = "";
 	//use sha_256 to generate a hash of the passed in string
 	unsigned char digest[SHA256_DIGEST_LENGTH];
 	SHA256_Update(&ctx, pass, strlen(pass));
 	SHA256_Final(digest, &ctx);
 	//return the hash
-	return hash;
+	return pass;
 }

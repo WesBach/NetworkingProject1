@@ -38,8 +38,8 @@ std::string parseMessage(int messageLength, Buffer& userBuffer);
 void sendMessage(SOCKET* sendingUser, std::string message);
 void joinRoom(userInfo joinUser, char &roomName);
 void leaveRoom(userInfo leaveUserInfo, char &roomName);
-void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword);
-void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword);
+void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestID);
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestID);
 std::vector<std::string> readPacket(userInfo& theUser,int packetlength);
 void buildMessage(userInfo& theUser,std::string& message);
 userInfo getClient(SOCKET& theSock);
@@ -210,15 +210,18 @@ int main()
 				}
 				else {
 					userWhoSentRequest = findUserByRequestID(requestId);
+				
+					if (userWhoSentRequest.requests.size() > 0)
+					{
+						//send the message in the buffer to the user;
+						//get the user
+						int res =send(userWhoSentRequest.userSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 
-					//TODO::
-					//Figure this out it errors out 
-					//cant test struct against null or nullptr??\
-					
-					//if (userWhoSentRequest != nullptr)
-					//{
-					//	//send the message in the buffer to the user;
-					//}
+						if (res == SOCKET_ERROR)
+						{
+							printf("Send failed at line:226 Chat Server with error: %ld\n", res);
+						}
+					}
 				}
 
 			}			
@@ -261,7 +264,7 @@ int main()
 				{
 					// Send message to other clients, and definately NOT the listening socket
 					std::vector<std::string> results = readPacket(currInfo,bytesIn);
-					
+					int requestId = rand() % 1000;
 
 					if (results.size() > 1)
 					{
@@ -281,11 +284,11 @@ int main()
 						}
 						else if (results[0] == "REGISTER" || results[0] == "register")
 						{
-							registerUser(ConnectSocket, results[1], results[2]);
+							registerUser(ConnectSocket, results[1], results[2], requestId);
 						}
 						else if (results[0] == "AUTHENTICATE" || results[0] == "authenticate")
 						{
-							authenticateUser(ConnectSocket, results[1], results[2]);
+							authenticateUser(ConnectSocket, results[1], results[2], requestId);
 						}
 					}
 				}
@@ -356,8 +359,7 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
 		else //(register and auth)
 		{
 			//randomly generate a request id
-			int requestId = rand() % 1000;
-			theUser.requests.push_back(requestId);
+			//theUser.requests.push_back(requestId);
 			//get message length
 			emailLength = theUser.userBuffer.ReadInt32BE();
 			//get email
@@ -512,25 +514,25 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 
 #include "AccountAuthentication.pb.h"
 
-void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword)
+void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestId)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
-
+	
 	//set the messageID
 	g_theBuffer->WriteInt32BE(4);
 
-	//Set the Length of the message
-	g_theBuffer->WriteInt32BE(userEmail.length() + userPlainTextPassword.length());
-
 	//Add the user credentials to the userAccount Object
+	userAccount.set_requestid(requestId);
 	userAccount.set_email(userEmail);
 	userAccount.set_plaintextpassword(userPlainTextPassword);
 
 	//Serialize the userAccount to a string
-	std::string serializedString;
-	userAccount.SerializeToString(&serializedString);
+	std::string serializedString = "";
+	serializedString = userAccount.SerializeAsString();
 
+	//write the string length
+	g_theBuffer->WriteInt32BE(serializedString.size());
 	//Add the serialized string to the globel buffer
 	g_theBuffer->WriteStringBE(serializedString);
 
@@ -538,7 +540,7 @@ void registerUser(SOCKET connectSock, std::string userEmail, std::string userPla
 	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
 
-void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword)
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestId)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
@@ -546,10 +548,8 @@ void authenticateUser(SOCKET connectSock, std::string userEmail, std::string use
 	//set the messageID
 	g_theBuffer->WriteInt32BE(5);
 
-	//Set the Length of the message
-	g_theBuffer->WriteInt32BE(userEmail.length() + userPlainTextPassword.length());
-
 	//Add the user credentials to the userAccount Object
+	userAccount.set_requestid(requestId);
 	userAccount.set_email(userEmail);
 	userAccount.set_plaintextpassword(userPlainTextPassword);
 
@@ -557,6 +557,8 @@ void authenticateUser(SOCKET connectSock, std::string userEmail, std::string use
 	std::string serializedString;
 	userAccount.SerializeToString(&serializedString);
 
+	//write the string length
+	g_theBuffer->WriteInt32BE(serializedString.size());
 	//Add the serialized string to the globel buffer
 	g_theBuffer->WriteStringBE(serializedString);
 

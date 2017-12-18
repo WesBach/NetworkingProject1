@@ -1,13 +1,13 @@
 #include "SQL_Wrapper.h"
 #include "Utility.h"
-SQL_Wrapper* SQL_Wrapper::theWrapper = nullptr;
+//SQL_Wrapper* SQL_Wrapper::theWrapper = nullptr;
 
 void SQL_Wrapper::connectToDB()
 {
 	//try to get a connection
 	try {
 		driver = get_driver_instance();
-		connection = driver->connect("127.0.0.1", "root", "SQL123");
+		connection = driver->connect("127.0.0.1:3306", "root", "SQL123");
 		connection->setSchema("authentication");
 	}
 	catch (sql::SQLException &exception)
@@ -23,10 +23,10 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 	//returns 1 for exists
 	//returns 0 for added
 	std::pair<int, int> returnInfo(-1,-1);
-	std::string fetchUserByEmail = "SELECT * FROM user WHERE email = " + email;
-	sql::ResultSet* result = this->executeSelect(fetchUserByEmail);
+	//std::string fetchUserByEmail = "SELECT * FROM user WHERE email = '" + email + "';";
+	sql::ResultSet* result = this->executeSelect("SELECT * FROM web_auth WHERE email = '" + email + "';");
 
-	if (result)
+	if (result->next() )
 	{
 		returnInfo.first = 1;
 		return returnInfo;
@@ -40,17 +40,17 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 		std::string tempPass = password + salt;
 		//hash the password
 		char* hashedPassword = createHash((char*)tempPass.c_str());
-		this->execute("INSERT INTO user last_login,creation_date values(now(),now())");
+		this->execute("INSERT INTO user last_login,creation_date values(now(),now());");
 
 		//get the users id
-		std::string selectLastId = "SELECT LAST_INSERT_ID()";
+		std::string selectLastId = "SELECT LAST_INSERT_ID();";
 		sql::ResultSet* result  = this->executeSelect(selectLastId);
 		//convert the id to a string for an insert into the next table
 		int userID = result->getInt(1);
 		std::string userId = std::to_string(userID);
 
 		//add the users web_auth info to the database
-		this->execute("INSERT INTO web_auth email,salt,userId,hash values(" + email + "," + salt + "," + userId + "," + hashedPassword + ")");
+		this->execute("INSERT INTO web_auth email,salt,userId,hash values('" + email + "','" + salt + "','" + userId + "','" + hashedPassword + "');");
 		
 		returnInfo.first = 0;
 		returnInfo.first = userID;
@@ -133,7 +133,7 @@ bool SQL_Wrapper::execute(const std::string& statement)
 {
 	try
 	{
-		this->prepState = connection->prepareStatement(statement);
+		this->prepState = connection->prepareStatement(statement.c_str());
 		return this->prepState->execute();
 	}
 	catch (sql::SQLException &exception)
@@ -152,7 +152,7 @@ int SQL_Wrapper::executeUpdate(const std::string& statement)
 {
 	try
 	{
-		this->prepState = this->connection->prepareStatement(statement);
+		this->prepState = this->connection->prepareStatement(statement.c_str());
 		return this->prepState->executeUpdate();
 	}
 	catch (sql::SQLException &exception)
@@ -167,20 +167,20 @@ int SQL_Wrapper::executeUpdate(const std::string& statement)
 	return false;
 }
 
-SQL_Wrapper * SQL_Wrapper::getInstance()
-{
-	if (SQL_Wrapper::theWrapper == nullptr)
-	{
-		SQL_Wrapper::theWrapper = new SQL_Wrapper();
-	}
-
-	return SQL_Wrapper::theWrapper;
-}
+//SQL_Wrapper * SQL_Wrapper::getInstance()
+//{
+//	if (SQL_Wrapper::theWrapper == nullptr)
+//	{
+//		SQL_Wrapper::theWrapper = new SQL_Wrapper();
+//	}
+//
+//	return SQL_Wrapper::theWrapper;
+//}
 
 sql::ResultSet* SQL_Wrapper::executeSelect(const std::string& statement) {
 	try
 	{
-		this->prepState = this->connection->prepareStatement(statement);
+		this->prepState = this->connection->prepareStatement(statement.c_str());
 		return this->prepState->executeQuery();
 	}
 	catch (sql::SQLException &exception)

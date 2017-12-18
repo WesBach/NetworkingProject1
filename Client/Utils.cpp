@@ -12,11 +12,11 @@ void start_text() {
 	lpCursor.bVisible = false;
 	SetConsoleCursorInfo(hStdout, &lpCursor);
 
-	coord.Y = 7;
+	coord.Y = 10;
 }
 
 void end_text() {
-	coord.Y = 7;
+	coord.Y = 10;
 }
 
 //Improve this funciton as needed....
