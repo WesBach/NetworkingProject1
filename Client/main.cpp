@@ -127,6 +127,8 @@ int main(int argc, char** argv) {
 	std::string userInput;
 	std::string command;
 	std::string roomName;
+	std::string email;
+	std::string password;
 	bool isMessagePopulated = false;
 	int smFind = -1;
 	int lrFind = -1;
@@ -150,8 +152,8 @@ int main(int argc, char** argv) {
 					smFind = userInput.find("SM "); //Send Message
 					jrFind = userInput.find("JR "); //Join Room
 					lrFind = userInput.find("LR "); //Leave Room
-					raFind = userInput.find("RA "); //Register Account
-					auFind = userInput.find("AU");	//Authenticate User
+					raFind = userInput.find("register"); //Register Account
+					auFind = userInput.find("authenticate");	//Authenticate User
 
 					//Get the commands for Join Room
 					if (jrFind >= 0)
@@ -192,13 +194,29 @@ int main(int argc, char** argv) {
 					//Get the commands for Register Account
 					if (raFind >= 0)
 					{
+						command = userInput.substr(0, 8);
+						email = userInput.substr(8, userInput.find(' '));
+						password = userInput.substr(command.length + email.length, userInput.end);
 
+						theCommands.push_back(command);
+						theCommands.push_back(email);
+						theCommands.push_back(password);
+						isMessagePopulated = true;
+						userInput = "";
 					}
 
 					//Get the commands for Authenticate User
 					if (auFind >= 0)
 					{
+						command = userInput.substr(0, 8);
+						email = userInput.substr(8, userInput.find(' '));
+						password = userInput.substr(command.length + email.length, userInput.end);
 
+						theCommands.push_back(command);
+						theCommands.push_back(email);
+						theCommands.push_back(password);
+						isMessagePopulated = true;
+						userInput = "";
 					}
 					
 				}			
