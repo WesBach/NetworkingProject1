@@ -195,9 +195,9 @@ int main(int argc, char** argv) {
 					if (raFind >= 0)
 					{
 						command = userInput.substr(0, 8);
-						email = userInput.substr(8, userInput.find(' '));
+						email = userInput.substr(9, userInput.find(' ') - 3);
 						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
-						password = userInput.substr(command.length() + email.length(), (userInput.length() - command.length()) - email.length());
+						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
 
 						theCommands.push_back(command);
 						theCommands.push_back(email);
@@ -210,9 +210,9 @@ int main(int argc, char** argv) {
 					if (auFind >= 0)
 					{
 						command = userInput.substr(0, 8);
-						email = userInput.substr(8, userInput.find(' '));
+						email = userInput.substr(8, userInput.find(' ') - 3);
 						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
-						password = userInput.substr(command.length() + email.length(), (userInput.length() - command.length()) - email.length());
+						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
 
 						theCommands.push_back(command);
 						theCommands.push_back(email);
