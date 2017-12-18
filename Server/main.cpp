@@ -461,7 +461,7 @@ void registerUser(std::string userEmail, std::string userPlainTextPassword)
 	g_theBuffer->WriteInt32BE(4);
 
 	//Set the Length of the message
-	g_theBuffer->WriteInt32BE(userEmail.length + userPlainTextPassword.length);
+	g_theBuffer->WriteInt32BE(userEmail.length() + userPlainTextPassword.length());
 
 	//Add the user credentials to the userAccount Object
 	userAccount.set_email(userEmail);
@@ -487,7 +487,7 @@ void authenticateUser(std::string userEmail, std::string userPlainTextPassword)
 	g_theBuffer->WriteInt32BE(5);
 
 	//Set the Length of the message
-	g_theBuffer->WriteInt32BE(userEmail.length + userPlainTextPassword.length);
+	g_theBuffer->WriteInt32BE(userEmail.length() + userPlainTextPassword.length());
 
 	//Add the user credentials to the userAccount Object
 	userAccount.set_email(userEmail);

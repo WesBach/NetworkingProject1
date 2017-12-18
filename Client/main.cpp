@@ -196,7 +196,8 @@ int main(int argc, char** argv) {
 					{
 						command = userInput.substr(0, 8);
 						email = userInput.substr(8, userInput.find(' '));
-						password = userInput.substr(command.length + email.length, userInput.end);
+						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
+						password = userInput.substr(command.length() + email.length(), (userInput.length() - command.length()) - email.length());
 
 						theCommands.push_back(command);
 						theCommands.push_back(email);
@@ -210,7 +211,8 @@ int main(int argc, char** argv) {
 					{
 						command = userInput.substr(0, 8);
 						email = userInput.substr(8, userInput.find(' '));
-						password = userInput.substr(command.length + email.length, userInput.end);
+						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
+						password = userInput.substr(command.length() + email.length(), (userInput.length() - command.length()) - email.length());
 
 						theCommands.push_back(command);
 						theCommands.push_back(email);
