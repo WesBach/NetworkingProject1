@@ -36,6 +36,8 @@ std::string parseMessage(int messageLength, Buffer& userBuffer);
 void sendMessage(SOCKET* sendingUser, std::string message);
 void joinRoom(userInfo joinUser, char &roomName);
 void leaveRoom(userInfo leaveUserInfo, char &roomName);
+void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword);
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword);
 std::vector<std::string> readPacket(userInfo& theUser,int packetlength);
 void buildMessage(userInfo& theUser,std::string& message);
 userInfo getClient(SOCKET& theSock);
