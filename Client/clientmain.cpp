@@ -1,4 +1,3 @@
-#include <ctime>
 #include <string>
 #include <iostream>
 #include <conio.h>
@@ -37,9 +36,6 @@ int requestId = 0;
 
 //TO DO: Client side connection
 int main(int argc, char** argv) {
-
-	//randomly generate a request id between 0 - 1000;
-	srand(time(0));
 
 	g_theBuffer = new Buffer();
 	g_theHeader = new Header();
@@ -373,21 +369,17 @@ void processCommands(std::vector<std::string>& theCommands) {
 		if (theCommands[0] == "REGISTER" || theCommands[0] == "register")
 		{
 			//Registration functionality
-
-
 			g_theHeader = new Header();
-			g_theHeader->message_id = 4;
-			g_theBuffer->WriteInt32BE(g_theHeader->message_id);
+			g_theHeader->message_id = 4; //messageid
+			g_theBuffer->WriteInt32BE(g_theHeader->message_id);//write to buffer
  
 			g_theHeader->packet_length = theCommands[0].size();
-			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);
-			g_theBuffer->WriteStringBE(theCommands[0]);
-			g_theBuffer->WriteInt32BE(theCommands[1].size());
-			g_theBuffer->WriteStringBE(theCommands[1]);
-			g_theBuffer->WriteInt32BE(theCommands[2].size());
-			g_theBuffer->WriteStringBE(theCommands[2]);
-
-
+			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);//write the packet length to the buffer
+			g_theBuffer->WriteStringBE(theCommands[0]);//write command
+			g_theBuffer->WriteInt32BE(theCommands[1].size());//write first length
+			g_theBuffer->WriteStringBE(theCommands[1]);//write first
+			g_theBuffer->WriteInt32BE(theCommands[2].size());//write second length
+			g_theBuffer->WriteStringBE(theCommands[2]);//write second 
 		}
 
 		if (theCommands[0] == "AUTHENTICATE" || theCommands[0] == "authenticate")

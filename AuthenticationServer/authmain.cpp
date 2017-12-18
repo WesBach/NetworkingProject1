@@ -27,7 +27,7 @@ userInfo g_chatServerInfo;
 //functions
 void buildMessage(userInfo& theUser, std::string& message,int messageType);
 void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType);
-std::vector<std::string> readPacket(userInfo& theUser, int packetLength);
+void readPacket(userInfo& theUser, int packetLength);
 std::string parseMessage(int messageLength, Buffer& userBuffer);
 
 SQL_Wrapper* pTheSQLWrapper;
@@ -131,8 +131,7 @@ int main() {
 				bytesIn = recv(sock, g_chatServerInfo.userBuffer.getBufferAsCharArray(), g_chatServerInfo.userBuffer.GetBufferLength(), 0);
 				if (bytesIn > 0)
 				{
-					//do the conversion
-					std::vector<std::string> results = readPacket(g_chatServerInfo, bytesIn);
+					readPacket(g_chatServerInfo,bytesIn);
 				}
 				else if (bytesIn == -1) {//print error message
 
@@ -141,25 +140,13 @@ int main() {
 					printf("receive failed with error: %i", WSAGetLastError());
 				}
 				// Send message to other clients, and definately NOT the listening socket
-				
-
-				if (results.size() > 1)
-				{
-					//if (theCommands[0] == "SM" || theCommands[0] == "sm")
-					if (results[0] == "REGISTER" || results[0] == "register")
-					{
-						//TODO::
-						//register the user
-					
-					}
-				}//end if
 			}//end if
 		}//end for 
 	}//end else
 }
 
 
-std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
+void readPacket(userInfo& theUser, int packetLength)
 {
 	std::string message = "";
 	std::string command = "";
@@ -275,7 +262,6 @@ std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 
 		//get the command length
 	}
-	return receviedMessages;
 }
 
 void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType) {
@@ -290,7 +276,6 @@ void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,
 	}
 }
 
-
 void buildMessage(userInfo& theUser, std::string& message,int messageType)
 {
 	theUser.userBuffer = Buffer();
@@ -301,7 +286,6 @@ void buildMessage(userInfo& theUser, std::string& message,int messageType)
 	//write the message
 	theUser.userBuffer.WriteStringBE(message);
 }
-
 
 std::string parseMessage(int messageLength, Buffer& userBuffer) {
 	std::string tempMessage = "";

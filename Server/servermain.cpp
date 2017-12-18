@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <sstream>
 #include <map>
+#include <ctime>
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "5000"	//was 8899
@@ -21,6 +22,7 @@ struct userInfo
 {
 	SOCKET userSocket;
 	Buffer userBuffer;
+	std::vector<int> requests;
 } newUser;
 
 //Globel variables
@@ -42,12 +44,17 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetlength);
 void buildMessage(userInfo& theUser,std::string& message);
 userInfo getClient(SOCKET& theSock);
 void sendServerMessage(SOCKET* sendingUser, std::string message);
-void receiveAuthMessage(SOCKET& sock, userInfo& theinfo);
+int receiveAuthMessage(SOCKET& sock, userInfo& theinfo);
+int parseAuthMessage(userInfo& theinfo);
+userInfo& findUserByRequestID(int requestId);
 
 int g_IDCounter = 0;
 
 int main()
 {
+	//seed the rand (for random request id)
+	srand(time(0));
+
 	SOCKET AcceptSocket;
 	fd_set readSet;
 	fd_set writeSet;
@@ -192,10 +199,27 @@ int main()
 			{
 				userInfo tempInfo;
 				tempInfo.userSocket = ConnectSocket;
-
+				userInfo userWhoSentRequest;
 				//TODO::
 				//handle the messages from the authentication server.
-				receiveAuthMessage(sock, tempInfo);
+				int requestId = receiveAuthMessage(sock, tempInfo);
+
+				if(requestId == -1)//no request id somthing went wrong
+				{
+					std::cout << "Something went wrong with the request id\n (From if (sock == ConnectSocket) //if its the authentication server)" << std::endl;
+				}
+				else {
+					userWhoSentRequest = findUserByRequestID(requestId);
+
+					//TODO::
+					//Figure this out it errors out 
+					//cant test struct against null or nullptr??\
+					
+					//if (userWhoSentRequest != nullptr)
+					//{
+					//	//send the message in the buffer to the user;
+					//}
+				}
 
 			}			
 			else if (sock == ListenSocket)// Is it an inbound connection?
@@ -331,6 +355,9 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
 		}
 		else //(register and auth)
 		{
+			//randomly generate a request id
+			int requestId = rand() % 1000;
+			theUser.requests.push_back(requestId);
 			//get message length
 			emailLength = theUser.userBuffer.ReadInt32BE();
 			//get email
@@ -539,10 +566,10 @@ void authenticateUser(SOCKET connectSock, std::string userEmail, std::string use
 
 
 
-void receiveAuthMessage(SOCKET& sock, userInfo& currInfo) {
+int receiveAuthMessage(SOCKET& sock, userInfo& theinfo) {
 	int bytesIn;
-	bytesIn = recv(sock, currInfo.userBuffer.getBufferAsCharArray(), currInfo.userBuffer.GetBufferLength(), 0);
-
+	bytesIn = recv(sock, theinfo.userBuffer.getBufferAsCharArray(), theinfo.userBuffer.GetBufferLength(), 0);
+	int requestId = 0;
 	if (bytesIn < 0)
 	{
 		// Drop the client
@@ -551,4 +578,135 @@ void receiveAuthMessage(SOCKET& sock, userInfo& currInfo) {
 	}
 	else
 	{
+		if (bytesIn >= 4)
+		{
+			requestId = parseAuthMessage(theinfo);
+
+		}
+		else
+		{
+			//cant read anything 
+			return requestId;
+		}
+	}
+
+	return requestId;
+}
+
+int parseAuthMessage(userInfo& theinfo) {
+	
+	int messageId = -1;
+	int messageLength = 0;
+	std::string message;
+	int requestId = -1;
+	
+	//message id
+	messageId = theinfo.userBuffer.ReadInt32BE();
+	//message length
+	messageLength = theinfo.userBuffer.ReadInt32BE();
+	//message
+	message = theinfo.userBuffer.ReadStringBE(messageLength);
+
+	if (messageId == 11)
+	{
+		//add success
+		std::string tempStr = "Account Successfully Registered!";
+		//populate the create 
+		AccountAuthentication::CreateAccount create;
+		create.ParseFromString(message);
+		//get the request id
+		requestId = create.requestid();
+
+		//write the message id to the buffer
+		g_theBuffer->WriteInt32BE(messageId);
+		//packet length
+		g_theBuffer->WriteInt32BE(tempStr.size());
+		//message 
+		g_theBuffer->WriteStringBE(tempStr);
+
+		//return the request id
+		return requestId;
+	}
+	else if(messageId == 12)
+	{
+		//add fail
+		std::string tempStr = "Failed to register account: ";
+		//populate the create 
+		AccountAuthentication::CreateAccountFailure createFail;
+		createFail.ParseFromString(message);
+		//get the request id
+		requestId = createFail.requestid();
+		//add the reason to the end of the message
+		tempStr += createFail.reason();
+		//write the message id to the buffer
+		g_theBuffer->WriteInt32BE(messageId);
+		//packet length
+		g_theBuffer->WriteInt32BE(tempStr.size());
+		//message 
+		g_theBuffer->WriteStringBE(tempStr);
+		//return the request id
+		return requestId;
+	}
+	else if (messageId == 13)
+	{
+		//auth success
+		std::string tempStr = "Successfully authenticated the account!";
+		//populate the create 
+		AccountAuthentication::AuthenticateAccount authenticate;
+		authenticate.ParseFromString(message);
+		//get the request id
+		requestId = authenticate.requestid();
+		//write the message id to the buffer
+		g_theBuffer->WriteInt32BE(messageId);
+		//packet length
+		g_theBuffer->WriteInt32BE(tempStr.size());
+		//message 
+		g_theBuffer->WriteStringBE(tempStr);
+		//return the request id
+		return requestId;
+	}
+	else if (messageId == 14)
+	{
+		//auth fail
+		std::string tempStr = "Failed to authenticate account: ";
+		//populate the create 
+		AccountAuthentication::AuthenticateAccountFailure authenticateFail;
+		authenticateFail.ParseFromString(message);
+		//get the request id
+		requestId = authenticateFail.requestid();
+		//add the reason to the end of the message
+		tempStr += authenticateFail.reason();
+		//write the message id to the buffer
+		g_theBuffer->WriteInt32BE(messageId);
+		//packet length
+		g_theBuffer->WriteInt32BE(tempStr.size());
+		//message 
+		g_theBuffer->WriteStringBE(tempStr);
+		//return the request id
+		return requestId;
+	}
+	else
+		std::cout << "Invalid authserver message id" << std::endl;
+
+
+	return -1;
+}
+
+userInfo& findUserByRequestID(int requestId) {
+
+	//search the users in the userinserver vector
+	for (int i = 0; i < usersInServer.size(); i++)
+	{
+		if (usersInServer[i].requests.size() > 0)
+		{
+			for (int request = 0; request < usersInServer[i].requests.size(); request++)
+			{
+				if (usersInServer[i].requests[request] == requestId)
+				{
+					return usersInServer[i];
+				}
+			}
+		}
+	}
+	return userInfo();
 }
