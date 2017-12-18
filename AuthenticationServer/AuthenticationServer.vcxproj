@@ -157,7 +157,7 @@
   <ItemGroup>
     <ClCompile Include="AccountAuthentication.pb.cc" />
     <ClCompile Include="Buffer.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="authmain.cpp" />
     <ClCompile Include="SQL_Wrapper.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>

@@ -159,7 +159,7 @@
   <ItemGroup>
     <ClCompile Include="AccountAuthentication.pb.cc" />
     <ClCompile Include="Buffer.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="servermain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AccountAuthentication.pb.h" />
