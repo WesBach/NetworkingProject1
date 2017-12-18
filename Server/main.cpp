@@ -40,6 +40,7 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetlength);
 void buildMessage(userInfo& theUser,std::string& message);
 userInfo getClient(SOCKET& theSock);
 void sendServerMessage(SOCKET* sendingUser, std::string message);
+void receiveAuthMessage(SOCKET& sock, userInfo& theinfo);
 
 int g_IDCounter = 0;
 
@@ -187,8 +188,13 @@ int main()
 
 			if (sock == ConnectSocket) //if its the authentication server
 			{
+				userInfo tempInfo;
+				tempInfo.userSocket = ConnectSocket;
+
 				//TODO::
 				//handle the messages from the authentication server.
+				receiveAuthMessage(sock, tempInfo);
+
 			}			
 			else if (sock == ListenSocket)// Is it an inbound connection?
 			{
@@ -409,9 +415,7 @@ void joinRoom(userInfo joinUser, char &roomName)
 			{
 				printf("Send failed with error: %ld\n", res);
 			}
-		}
-
-		
+		}	
 	}
 
 	std::string joinConfirmation = "You successfully joined room: ";
@@ -529,4 +533,20 @@ void authenticateUser(SOCKET connectSock, std::string userEmail, std::string use
 
 	//Send the populated buffer to the auth server
 	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
+}
+
+
+
+void receiveAuthMessage(SOCKET& sock, userInfo& currInfo) {
+	int bytesIn;
+	bytesIn = recv(sock, currInfo.userBuffer.getBufferAsCharArray(), currInfo.userBuffer.GetBufferLength(), 0);
+
+	if (bytesIn < 0)
+	{
+		// Drop the client
+		closesocket(sock);
+		FD_CLR(sock, &master);
+	}
+	else
+	{
 }
