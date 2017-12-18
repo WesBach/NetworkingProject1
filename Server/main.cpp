@@ -96,6 +96,7 @@ int main()
 		WSACleanup();
 		return 1;
 	}
+
 	//connect to the authentication server  
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
