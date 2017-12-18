@@ -29,7 +29,6 @@ std::map<char, std::vector<userInfo*>> roomMap;
 std::vector<userInfo> usersInServer;
 fd_set master;
 SOCKET ListenSocket;
-SOCKET ConnectSocket;
 Buffer* g_theBuffer = new Buffer();
 std::string parseMessage(int messageLength, Buffer& userBuffer);
 
@@ -61,7 +60,7 @@ int main()
 	DWORD RecvBytes;
 	DWORD SendBytes;
 	//for authentication server
-	ConnectSocket = INVALID_SOCKET;
+	SOCKET ConnectSocket = INVALID_SOCKET;
 
 	std::cout << "Chat Server" << std::endl;
 
@@ -250,8 +249,11 @@ int main()
 						}
 						else if (results[0] == "REGISTER" || results[0] == "register")
 						{
-							//TODO: Need to find a proper way to populate both the email and password.
-							//registerUser()
+							registerUser(ConnectSocket, results[1], results[2]);
+						}
+						else if (results[0] == "AUTHENTICATE" || results[0] == "authenticate")
+						{
+							authenticateUser(ConnectSocket, results[1], results[2]);
 						}
 					}
 				}
@@ -287,29 +289,54 @@ std::string parseMessage(int messageLength, Buffer& userBuffer) {
 std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
 {
 	std::string message = "";
+	std::string email = "";
+	std::string password = "";
 	std::string command = "";
 	int messageId = 0;
 	int messageLength = 0;
 	int commandLength = 0;
+	int emailLength = 0;
+	int passwordLength = 0;
 	std::vector<std::string> receviedMessages;
 
 	//if the message is specific
 	if (packetLength > 3)
 	{
-		message = "";
-		//read the packet id and the command length
+		//read the packet id doesnt matter what it is becaus ethis checks what it is
 		messageId = theUser.userBuffer.ReadInt32BE();
+
 		//get the command length
 		commandLength = theUser.userBuffer.ReadInt32BE();
 		//read the command 
 		command = parseMessage(commandLength, theUser.userBuffer);
-		//get message length
-		messageLength = theUser.userBuffer.ReadInt32BE();
-		//get message
-		message = parseMessage(messageLength, theUser.userBuffer);
-		//push back the messages
-		receviedMessages.push_back(command);
-		receviedMessages.push_back(message);
+
+		message = "";
+		if (messageId <= 3)
+		{
+			//get message length
+			messageLength = theUser.userBuffer.ReadInt32BE();
+			//get message
+			message = parseMessage(messageLength, theUser.userBuffer);
+			//push back the messages
+			receviedMessages.push_back(command);
+			receviedMessages.push_back(message);
+		}
+		else //(register and auth)
+		{
+			//get message length
+			emailLength = theUser.userBuffer.ReadInt32BE();
+			//get email
+			email = parseMessage(emailLength, theUser.userBuffer);
+			//get the password length
+			passwordLength = theUser.userBuffer.ReadInt32BE();
+			//get password
+			password = parseMessage(passwordLength, theUser.userBuffer);
+			//push back the messages
+			receviedMessages.push_back(command);
+			receviedMessages.push_back(email);
+			receviedMessages.push_back(password);
+		}
+		
 	}
 
 	return receviedMessages;
@@ -452,7 +479,7 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 
 #include "AccountAuthentication.pb.h"
 
-void registerUser(std::string userEmail, std::string userPlainTextPassword)
+void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
@@ -475,10 +502,10 @@ void registerUser(std::string userEmail, std::string userPlainTextPassword)
 	g_theBuffer->WriteStringBE(serializedString);
 
 	//Send the populated buffer to the auth server
-	send(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
+	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
 
-void authenticateUser(std::string userEmail, std::string userPlainTextPassword)
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
@@ -501,5 +528,5 @@ void authenticateUser(std::string userEmail, std::string userPlainTextPassword)
 	g_theBuffer->WriteStringBE(serializedString);
 
 	//Send the populated buffer to the auth server
-	send(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
+	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
