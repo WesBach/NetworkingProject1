@@ -10,6 +10,7 @@
 #include <sstream>
 #include <map>
 #include <ctime>
+#include "AccountAuthentication.pb.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "5000"	//was 8899
@@ -295,10 +296,12 @@ int main()
 						}
 						else if (results[0] == "REGISTER" || results[0] == "register")
 						{
+							currInfo.requests.push_back(requestId);
 							registerUser(ConnectSocket, results[1], results[2], requestId);
 						}
 						else if (results[0] == "AUTHENTICATE" || results[0] == "authenticate")
 						{
+							currInfo.requests.push_back(requestId);
 							authenticateUser(ConnectSocket, results[1], results[2], requestId);
 						}
 					}
@@ -523,7 +526,6 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 	}
 }
 
-#include "AccountAuthentication.pb.h"
 
 void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestId)
 {
@@ -576,8 +578,6 @@ void authenticateUser(SOCKET connectSock, std::string userEmail, std::string use
 	//Send the populated buffer to the auth server
 	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
-
-
 
 int receiveAuthMessage(SOCKET& sock, userInfo& theinfo) {
 	int bytesIn;
