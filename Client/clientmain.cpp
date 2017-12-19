@@ -190,14 +190,55 @@ int main(int argc, char** argv) {
 					//Get the commands for Register Account
 					if (ruFind >= 0)
 					{
-						command = userInput.substr(0, 8);
-						email = userInput.substr(9, userInput.find(' ') - 3);
-						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
-						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
+						int registerPos = userInput.find("REGISTER");
+						std::string comm = "";
+						std::string emailString = "";
+						std::string pass = "";
 
-						theCommands.push_back(command);
-						theCommands.push_back(email);
-						theCommands.push_back(password);
+						//build the command 
+						for (int i = 0; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								comm += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						//build the email
+						for (int i = comm.size() +1 ; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								emailString += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						//build password
+						for (int i = (emailString.size() + comm.size()) + 2; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								pass += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
+						theCommands.push_back(comm);
+						theCommands.push_back(emailString);
+						theCommands.push_back(pass);
 						isMessagePopulated = true;
 						userInput = "";
 					}
@@ -205,11 +246,51 @@ int main(int argc, char** argv) {
 					//Get the commands for Authenticate User
 					if (auFind >= 0)
 					{
-						command = userInput.substr(0, 12);
-						email = userInput.substr(12, userInput.find(' ') - 5);
-						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
-						password = userInput.substr(command.length() + email.length() + 1, (userInput.length() - command.length()) - email.length());
+						std::string comm = "";
+						std::string emailString = "";
+						std::string pass = "";
 
+						//build the command 
+						for (int i = 0; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								comm += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						//build the email
+						for (int i = comm.size() + 1; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								emailString += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						//build password
+						for (int i = (emailString.size() + comm.size()) + 2; i < userInput.size(); i++)
+						{
+							//start at the beginning of the string 
+							if (userInput[i] != ' ')
+							{
+								pass += userInput[i];
+							}
+							else
+							{
+								break;
+							}
+						}
 						theCommands.push_back(command);
 						theCommands.push_back(email);
 						theCommands.push_back(password);

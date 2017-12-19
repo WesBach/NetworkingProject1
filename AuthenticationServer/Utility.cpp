@@ -32,7 +32,7 @@ std::string createSalt()
 	return str;
 }
 
-char * createHash(char* pass) {
+std::string createHash(char* pass) {
 	//use sha_256 to generate a hash of the passed in string
 	unsigned char digest[SHA256_DIGEST_LENGTH];
 
@@ -45,9 +45,7 @@ char * createHash(char* pass) {
 	char mdString[SHA256_DIGEST_LENGTH * 2 + 1];
 	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
 		sprintf(&mdString[i * 2], "%02x", (unsigned int)digest[i]);
-
-	//SHA256_Update(&ctx, pass, strlen(pass));
-	//SHA256_Final(digest, &ctx);
+	
 	//return the hash
 	return mdString;
 }

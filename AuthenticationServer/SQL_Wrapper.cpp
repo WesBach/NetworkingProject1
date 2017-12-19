@@ -33,31 +33,36 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 	}
 	else
 	{
-
 		//create the salt 
 		std::string salt = createSalt();
 		//add the salt to the password
 		std::string tempPass = password + salt;
-		//hash the password
-		char* hashedPassword = createHash((char*)tempPass.c_str());
-		this->execute("INSERT INTO user last_login,creation_date values(now(),now());");
 
+		this->execute("INSERT INTO user (last_login,creation_date) values(NOW(),NOW());");
 		//get the users id
 		std::string selectLastId = "SELECT LAST_INSERT_ID();";
 		sql::ResultSet* result  = this->executeSelect(selectLastId);
+		int userID = 0;
+
 		//convert the id to a string for an insert into the next table
-		int userID = result->getInt(1);
+		if(result->next())
+			userID = result->getInt(1);	
+		//hash the password
+		
 		std::string userId = std::to_string(userID);
 
+		std::string hashedPassword = createHash((char*)tempPass.c_str());
+		//std::string tempString = hashedPassword;
+
+		std::string insert = "INSERT INTO web_auth (email,salt,userId,hashed_password) values('" + email + "','" + salt + "','" + userId + "','" + hashedPassword + "');";
+
 		//add the users web_auth info to the database
-		this->execute("INSERT INTO web_auth email,salt,userId,hash values('" + email + "','" + salt + "','" + userId + "','" + hashedPassword + "');");
+		this->execute(insert);
 		
 		returnInfo.first = 0;
 		returnInfo.first = userID;
 		return returnInfo;
-
 	}
-
 
 	returnInfo.first = -1;
 	return returnInfo;
@@ -88,7 +93,7 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 
 		std::string tempPass = password + salt;
 		//hash the password
-		char* hashedPassword = createHash((char*)tempPass.c_str());
+		std::string hashedPassword = createHash((char*)tempPass.c_str());
 		//convert the char* to a string
 		std::string hashString(hashedPassword);
 

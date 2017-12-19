@@ -6,7 +6,7 @@
 //TODO::
 //get libs for salting or create own salt using system time
 
-char * createHash(char* pass);
+std::string createHash(char* pass);
 std::string createSalt();
 char genRandomChar();
 
