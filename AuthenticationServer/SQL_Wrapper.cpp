@@ -69,7 +69,7 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 }
 
 std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std::string email, std::string password)
-{
+{ 
 	// -1 for server error 
 	// 1 for invalid credentials
 	// 0 for success 
