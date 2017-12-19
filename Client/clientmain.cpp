@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
 					if (ruFind >= 0)
 					{
 						command = userInput.substr(0, 8);
-						email = userInput.substr(9, userInput.find(' ') - 5);
+						email = userInput.substr(9, userInput.find(' ') - 3);
 						//start from after the command and email lenth (might have to add spaces) and go until the end of the string.
 						password = userInput.substr(command.length() + email.length() + 2, (userInput.length() - command.length()) - email.length());
 
