@@ -60,7 +60,7 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 		this->execute(insert);
 		
 		returnInfo.first = 0;
-		returnInfo.first = userID;
+		returnInfo.second = userID;
 		return returnInfo;
 	}
 
