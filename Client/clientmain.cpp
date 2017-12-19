@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 			char c = _getch();
 			if (c == '\r')
 			{
-				
+
 				//no error checking for the room after (right now assume that its correct)
 				if (userInput.length() > 3)
 				{
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
 					ruFind = userInput.find("REGISTER"); //Register Account
 					auFind = userInput.find("AUTHENTICATE");	//Authenticate User
 
-					//Get the commands for Join Room
+																//Get the commands for Join Room
 					if (jrFind >= 0)
 					{
 						command = userInput.substr(0, 2);
@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
 						}
 
 						//build the email
-						for (int i = comm.size() +1 ; i < userInput.size(); i++)
+						for (int i = comm.size() + 1; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
 							if (userInput[i] != ' ')
@@ -297,8 +297,8 @@ int main(int argc, char** argv) {
 						isMessagePopulated = true;
 						userInput = "";
 					}
-					
-				}			
+
+				}
 				populateScreenData(command + " " + roomName);
 
 			}
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
 			//readInput(theCommands, userInput);
 			//process the commands from input 
 			processCommands(theCommands);
-			
+
 			//send command
 			int sendResult = send(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength() + 1, 0);
 			//check for error
@@ -332,13 +332,13 @@ int main(int argc, char** argv) {
 		{
 			//do the conversion
 			std::string receivedPhrase = receiveMessage(*g_theBuffer);
-			if(receivedPhrase.size() > 0)
+			if (receivedPhrase.size() > 0)
 				populateScreenData(receivedPhrase);
 		}
 		else if (bytesReceived == -1) {//print error message
 
 		}
-		else if(bytesReceived == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {//print error message
+		else if (bytesReceived == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {//print error message
 			print_text("receive failed with error: %s", WSAGetLastError());
 		}
 
@@ -453,7 +453,7 @@ void processCommands(std::vector<std::string>& theCommands) {
 			g_theHeader = new Header();
 			g_theHeader->message_id = 4; //messageid
 			g_theBuffer->WriteInt32BE(g_theHeader->message_id);//write to buffer
- 
+
 			g_theHeader->packet_length = theCommands[0].size();
 			g_theBuffer->WriteInt32BE(g_theHeader->packet_length);//write the packet length to the buffer
 			g_theBuffer->WriteStringBE(theCommands[0]);//write command

@@ -75,6 +75,7 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 	// 0 for success 
 	std::pair<std::pair<int, int>, std::string> returnInfo;
 	returnInfo.second = "";
+	//user id
 	returnInfo.first.second = -1;
 
 	//find the user by it's email
@@ -103,6 +104,7 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 		if (hashString.compare(tempPass))
 		{
 			//they match and were good to go
+			//success
 			returnInfo.first.first =  0;
 			std::string getUserById = "SELECT * FROM user WHERE id =" + userId;
 			getUserById += ";";
@@ -126,10 +128,12 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 		}
 		else
 		{
+			//invalid credentials
 			returnInfo.first.first = 1;
 			return returnInfo;
 		}
 	}
+	//shouldnt reach this point
 	returnInfo.first.first = 1;
 	return returnInfo;
 }

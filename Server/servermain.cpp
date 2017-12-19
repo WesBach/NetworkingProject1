@@ -39,9 +39,9 @@ void sendMessage(SOCKET* sendingUser, std::string message);
 void joinRoom(userInfo joinUser, char &roomName);
 void leaveRoom(userInfo leaveUserInfo, char &roomName);
 void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestID);
-void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestID);
-std::vector<std::string> readPacket(userInfo& theUser,int packetlength);
-void buildMessage(userInfo& theUser,std::string& message);
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestID);
+std::vector<std::string> readPacket(userInfo& theUser, int packetlength);
+void buildMessage(userInfo& theUser, std::string& message);
 userInfo getClient(SOCKET& theSock);
 void sendServerMessage(SOCKET* sendingUser, std::string message);
 int receiveAuthMessage(SOCKET& sock, userInfo& theinfo);
@@ -70,7 +70,10 @@ int main()
 	DWORD RecvBytes;
 	DWORD SendBytes;
 	//for authentication server
+	//socket to send data to for auth server
 	SOCKET ConnectSocket = INVALID_SOCKET;
+	//socket to get data from auth server
+	SOCKET authServerRec = INVALID_SOCKET;
 
 	std::cout << "Chat Server" << std::endl;
 
@@ -173,6 +176,7 @@ int main()
 	//for debugging
 	char tempBreak;
 	bool running = true;
+	bool authServerConnected = false;
 
 	while (running)
 	{
@@ -195,7 +199,7 @@ int main()
 			// Makes things easy for us doing this assignment
 			SOCKET sock = copy.fd_array[i];
 
-			if (sock == ConnectSocket) //if its the authentication server
+			if (sock == authServerRec) //if its the authentication server
 			{
 				userInfo tempInfo;
 				tempInfo.userSocket = ConnectSocket;
@@ -204,18 +208,18 @@ int main()
 				//handle the messages from the authentication server.
 				int requestId = receiveAuthMessage(sock, tempInfo);
 
-				if(requestId == -1)//no request id somthing went wrong
+				if (requestId == -1)//no request id somthing went wrong
 				{
 					std::cout << "Something went wrong with the request id\n (From if (sock == ConnectSocket) //if its the authentication server)" << std::endl;
 				}
 				else {
 					userWhoSentRequest = findUserByRequestID(requestId);
-				
+
 					if (userWhoSentRequest.requests.size() > 0)
 					{
 						//send the message in the buffer to the user;
 						//get the user
-						int res =send(userWhoSentRequest.userSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
+						int res = send(userWhoSentRequest.userSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 
 						if (res == SOCKET_ERROR)
 						{
@@ -224,7 +228,7 @@ int main()
 					}
 				}
 
-			}			
+			}
 			else if (sock == ListenSocket)// Is it an inbound connection?
 			{
 				// Accept a new connection
@@ -236,6 +240,13 @@ int main()
 
 				//Assigns the new user to the hub room.
 				usersInServer.push_back(newUser);
+
+				//check to see if its the auth server (only works if auth server is first connection)
+				if (authServerConnected == false)
+				{
+					authServerRec = client;
+					authServerConnected = true;
+				}
 
 				// Add the new connection to the list of connected clients
 				FD_SET(client, &master);
@@ -263,7 +274,7 @@ int main()
 				else
 				{
 					// Send message to other clients, and definately NOT the listening socket
-					std::vector<std::string> results = readPacket(currInfo,bytesIn);
+					std::vector<std::string> results = readPacket(currInfo, bytesIn);
 					int requestId = rand() % 1000;
 
 					if (results.size() > 1)
@@ -275,7 +286,7 @@ int main()
 						}
 						else if (results[0] == "JR" || results[0] == "jr")
 						{
-							
+
 							joinRoom(currInfo, results[1][0]);
 						}
 						else if (results[0] == "LR" || results[0] == "lr")
@@ -321,7 +332,7 @@ std::string parseMessage(int messageLength, Buffer& userBuffer) {
 	return tempMessage;
 }
 
-std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
+std::vector<std::string> readPacket(userInfo& theUser, int packetLength)
 {
 	std::string message = "";
 	std::string email = "";
@@ -373,7 +384,7 @@ std::vector<std::string> readPacket(userInfo& theUser,int packetLength)
 			receviedMessages.push_back(email);
 			receviedMessages.push_back(password);
 		}
-		
+
 	}
 
 	return receviedMessages;
@@ -394,7 +405,7 @@ void sendServerMessage(SOCKET* sendingUser, std::string message) {
 void sendMessage(SOCKET* sendingUser, std::string message)
 {
 	userInfo theUser = getClient(*sendingUser);
-	buildMessage(theUser,message);
+	buildMessage(theUser, message);
 
 	for (int i = 0; i < master.fd_count; i++)
 	{
@@ -410,9 +421,9 @@ void sendMessage(SOCKET* sendingUser, std::string message)
 	}
 }
 
-void buildMessage(userInfo& theUser,std::string& message)
+void buildMessage(userInfo& theUser, std::string& message)
 {
-	theUser.userBuffer = Buffer(); 
+	theUser.userBuffer = Buffer();
 	theUser.userBuffer.WriteInt32BE(message.size());
 	theUser.userBuffer.WriteStringBE(message);
 }
@@ -436,7 +447,7 @@ void joinRoom(userInfo joinUser, char &roomName)
 		message += roomName;
 		tempInfo = getClient(outSock);
 
-		buildMessage(tempInfo,message);
+		buildMessage(tempInfo, message);
 
 		//send all other clients in that room a message that a user joined
 		if (outSock != ListenSocket && outSock != joinUser.userSocket)
@@ -446,7 +457,7 @@ void joinRoom(userInfo joinUser, char &roomName)
 			{
 				printf("Send failed with error: %ld\n", res);
 			}
-		}	
+		}
 	}
 
 	std::string joinConfirmation = "You successfully joined room: ";
@@ -489,7 +500,7 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 		}//if roomName == it->first
 	}//for
 
-	//Send the leave room status update to all of the users in the room that was left
+	 //Send the leave room status update to all of the users in the room that was left
 	for (int i = 0; i < master.fd_count; i++)
 	{
 		bool userInRoom = false;
@@ -514,11 +525,11 @@ void leaveRoom(userInfo leaveUserInfo, char &roomName)
 
 #include "AccountAuthentication.pb.h"
 
-void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestId)
+void registerUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestId)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
-	
+
 	//set the messageID
 	g_theBuffer->WriteInt32BE(4);
 
@@ -540,7 +551,7 @@ void registerUser(SOCKET connectSock, std::string userEmail, std::string userPla
 	send(connectSock, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength(), 0);
 }
 
-void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword,int& requestId)
+void authenticateUser(SOCKET connectSock, std::string userEmail, std::string userPlainTextPassword, int& requestId)
 {
 	AccountAuthentication::AuthenticateAccount userAccount;
 	g_theBuffer->getBuffer();
@@ -596,12 +607,12 @@ int receiveAuthMessage(SOCKET& sock, userInfo& theinfo) {
 }
 
 int parseAuthMessage(userInfo& theinfo) {
-	
+
 	int messageId = -1;
 	int messageLength = 0;
 	std::string message;
 	int requestId = -1;
-	
+
 	//message id
 	messageId = theinfo.userBuffer.ReadInt32BE();
 	//message length
@@ -629,7 +640,7 @@ int parseAuthMessage(userInfo& theinfo) {
 		//return the request id
 		return requestId;
 	}
-	else if(messageId == 12)
+	else if (messageId == 12)
 	{
 		//add fail
 		std::string tempStr = "Failed to register account: ";

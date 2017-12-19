@@ -12,6 +12,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 #define DEFAULT_PORT "6000"
+#define DEFAULT_CHAT_SERVER_PORT "5000"
 //User sockets and buffer struct
 struct userInfo
 {
@@ -21,15 +22,16 @@ struct userInfo
 
 fd_set master;
 SOCKET ListenSocket;
+SOCKET ConnectSocket;
 Buffer* g_theBuffer = new Buffer();
 userInfo g_chatServerInfo;
 
 //functions
-void buildMessage(userInfo& theUser, std::string& message,int messageType);
-void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType);
+void buildMessage(userInfo& theUser, std::string& message, int messageType);
+void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message, int messageType);
 void readPacket(userInfo& theUser, int packetLength);
 std::string parseMessage(int messageLength, Buffer& userBuffer);
-
+void connectToChatServer();
 SQL_Wrapper* pTheSQLWrapper;
 
 int main() {
@@ -104,7 +106,7 @@ int main() {
 		// the call to select() is _DESTRUCTIVE_. The copy only contains the sockets that
 		// are accepting inbound connection requests OR messages.
 
-		fd_set copy = master; 
+		fd_set copy = master;
 		int socketCount = select(0, &copy, nullptr, nullptr, 0);
 
 		if (g_chatServerInfo.userSocket == NULL)
@@ -128,6 +130,7 @@ int main() {
 					FD_SET(g_chatServerInfo.userSocket, &master);
 
 					std::cout << "Chat server successfully connected!";
+					connectToChatServer();
 				}//end if
 			}//end for 
 		}
@@ -149,7 +152,7 @@ int main() {
 
 		}
 		//should only be one.
-		
+
 	}//end else
 }
 
@@ -161,8 +164,8 @@ void readPacket(userInfo& theUser, int packetLength)
 	int messageId = 0;
 	int messageLength = 0;
 	std::vector<std::string> receviedMessages;
-	std::pair<int, int> addAccountInfo(-2,-1);
-	std::pair<std::pair<int, int>,std::string> authAccountInfo(std::pair<int, int>(-2, -1),"");
+	std::pair<int, int> addAccountInfo(-2, -1);
+	std::pair<std::pair<int, int>, std::string> authAccountInfo(std::pair<int, int>(-2, -1), "");
 
 	//if the message is specific
 	if (packetLength > 4)
@@ -187,11 +190,11 @@ void readPacket(userInfo& theUser, int packetLength)
 
 			//returns -1 for server error 
 			//returns 1 for exists
- 
+
 			if (addAccountInfo.first == 0)//success
 			{
 				//create the AuthenticateAccountSuccess object
-				AccountAuthentication::AuthenticateAccountSuccess success;
+				AccountAuthentication::CreateAccountSuccess success;
 				//populate
 				success.set_requestid(account.requestid());
 				success.set_userid(addAccountInfo.second);
@@ -201,7 +204,7 @@ void readPacket(userInfo& theUser, int packetLength)
 				//send the success
 				sendAuthenticationServerMessage(g_chatServerInfo, successSerialize, 11);
 			}
-			else 
+			else
 			{
 				//create the AuthenticateAccountFailure object and populate it
 				AccountAuthentication::AuthenticateAccountFailure failure;
@@ -244,7 +247,7 @@ void readPacket(userInfo& theUser, int packetLength)
 				std::string authSerial = authSuccess.SerializeAsString();
 				//send the message
 				sendAuthenticationServerMessage(g_chatServerInfo, authSerial, 13);
-				
+
 			}
 			else // authentication failure
 			{
@@ -263,28 +266,28 @@ void readPacket(userInfo& theUser, int packetLength)
 				std::string authFailureMessage;
 				authFailureMessage = authFailure.SerializeAsString();
 				//send the failure
-				sendAuthenticationServerMessage(g_chatServerInfo, authFailureMessage,14);
+				sendAuthenticationServerMessage(g_chatServerInfo, authFailureMessage, 14);
 			}
-			
+
 		}
 
 		//get the command length
 	}
 }
 
-void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,int messageType) {
+void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message, int messageType) {
 	//server message happens when client joins the server?
 	//userInfo theUser = getClient(*sendingUser);
-	buildMessage(sendingUser, message,messageType);
+	buildMessage(sendingUser, message, messageType);
 
-	int res = send(sendingUser.userSocket, sendingUser.userBuffer.getBufferAsCharArray(), sendingUser.userBuffer.GetBufferLength(), 0);
+	int res = send(ConnectSocket, sendingUser.userBuffer.getBufferAsCharArray(), sendingUser.userBuffer.GetBufferLength(), 0);
 	if (res == SOCKET_ERROR)
 	{
 		printf("Send failed with error: %ld\n", res);
 	}
 }
 
-void buildMessage(userInfo& theUser, std::string& message,int messageType)
+void buildMessage(userInfo& theUser, std::string& message, int messageType)
 {
 	theUser.userBuffer = Buffer();
 	//write the id
@@ -299,4 +302,54 @@ std::string parseMessage(int messageLength, Buffer& userBuffer) {
 	std::string tempMessage = "";
 	tempMessage += userBuffer.ReadStringBE(messageLength);
 	return tempMessage;
+}
+
+void connectToChatServer()
+{
+	int iResult = 0;
+	struct addrinfo* result = 0;
+	struct addrinfo addressInfo;
+	struct addrinfo* ptr = NULL;
+	struct addrinfo hints;
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	//get the address info for the authentication server
+	iResult = getaddrinfo(NULL, DEFAULT_CHAT_SERVER_PORT, &hints, &result);
+	if (iResult != 0) {
+		printf("getaddrinfo failed with error: %d\n", iResult);
+		WSACleanup();
+		return;
+	}
+
+	//connect to the authentication server  
+	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+		if (ConnectSocket == INVALID_SOCKET) {
+			printf("socket() failed with error: %d\n", iResult);
+			WSACleanup();
+			return;
+		}
+
+		//connect to the socket
+		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		if (iResult == SOCKET_ERROR) {
+			closesocket(ConnectSocket);
+			ConnectSocket = INVALID_SOCKET;
+			continue;
+		}
+		break;
+	}
+
+	freeaddrinfo(result);
+	//Check if the Connected socket is valid
+	if (ConnectSocket == INVALID_SOCKET) {
+		printf("Unable to connect to server\n");
+		WSACleanup();
+		return;
+	}
+
 }
