@@ -622,7 +622,7 @@ int parseAuthMessage(userInfo& theinfo) {
 	if (messageId == 11)
 	{
 		//add success
-		std::string tempStr = "Account Successfully Registered!";
+		std::string tempStr = "Registration successful!";
 		//populate the create 
 		AccountAuthentication::CreateAccountSuccess create;
 		create.ParseFromString(message);
@@ -665,13 +665,15 @@ int parseAuthMessage(userInfo& theinfo) {
 	}
 	else if (messageId == 13)
 	{
-		//auth success
-		std::string tempStr = "Successfully authenticated the account!";
 		//populate the create 
 		AccountAuthentication::AuthenticateAccountSuccess authenticate;
 		authenticate.ParseFromString(message);
 		//get the request id
 		requestId = authenticate.requestid();
+
+		//auth success
+		std::string tempStr = "Authentication successful, account created on " + authenticate.creationdate();
+
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 

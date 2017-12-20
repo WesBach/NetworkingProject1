@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
 				userInput = userInput.substr(0, userInput.length()-1);
 			}
 			else
-			{
+			{	
 				userInput += c;
 			}
 		}
@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
 		
 		printScreen();
 
-		std::string textOnScreen = "-> " + userInput;
+		std::string textOnScreen = "->" + userInput;
 
 		print_text("%-75s", textOnScreen.c_str());
 
