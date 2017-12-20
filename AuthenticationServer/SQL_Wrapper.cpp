@@ -100,12 +100,12 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 		//hash the password
 		std::string hashedPassword = createHash((char*)tempPass.c_str());
 		//convert the char* to a string
-		std::string hashString(hashedPassword);
+		//std::string hashString(hashedPassword);
 
 		//required uint64 userId = 2;
 		//required string creationDate = 3;
 
-		if (hashString.compare(tempPass))
+		if (hash == hashedPassword)
 		{
 			//they match and were good to go
 			//success
