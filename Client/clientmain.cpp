@@ -336,6 +336,8 @@ int main(int argc, char** argv) {
 		
 		printScreen();
 
+		print_text("%-75s", userInput.c_str());
+
 		end_text();
 	}
 
