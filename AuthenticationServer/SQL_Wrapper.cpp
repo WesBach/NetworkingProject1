@@ -110,7 +110,8 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 			//they match and were good to go
 			//success
 			returnInfo.first.first =  0;
-			std::string getUserById = "SELECT * FROM user WHERE id ='" + userId;
+			std::string getUserById = "SELECT * FROM user WHERE id ='";
+			getUserById += std::to_string(userId); ;
 			getUserById += "';";
 
 			sql::ResultSet* theUser;
