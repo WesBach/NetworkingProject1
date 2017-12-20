@@ -280,7 +280,6 @@ int main()
 
 					if (results.size() > 1)
 					{
-						//if (theCommands[0] == "SM" || theCommands[0] == "sm")
 						if (results[0] == "SM" || results[0] == "sm")
 						{
 							sendMessage(&sock, results[1]);
@@ -624,7 +623,7 @@ int parseAuthMessage(userInfo& theinfo) {
 		//add success
 		std::string tempStr = "Account Successfully Registered!";
 		//populate the create 
-		AccountAuthentication::CreateAccount create;
+		AccountAuthentication::CreateAccountSuccess create;
 		create.ParseFromString(message);
 		//get the request id
 		requestId = create.requestid();
@@ -664,7 +663,7 @@ int parseAuthMessage(userInfo& theinfo) {
 		//auth success
 		std::string tempStr = "Successfully authenticated the account!";
 		//populate the create 
-		AccountAuthentication::AuthenticateAccount authenticate;
+		AccountAuthentication::AuthenticateAccountSuccess authenticate;
 		authenticate.ParseFromString(message);
 		//get the request id
 		requestId = authenticate.requestid();
