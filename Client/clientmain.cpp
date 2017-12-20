@@ -357,6 +357,7 @@ int main(int argc, char** argv) {
 
 //Name:			receiveMessage
 //Purpose:		takes in the message from the server and processes it
+//Return:		std::string 
 std::string receiveMessage(Buffer& theBuffer) {
 	Header tempHeader;
 	tempHeader.packet_length = theBuffer.ReadInt32BE();
@@ -364,13 +365,21 @@ std::string receiveMessage(Buffer& theBuffer) {
 	return message;
 }
 
+
+//Name:			populateScreenData
+//Purpose:		Add data to the screen data vector.
+//Return:		void
 void populateScreenData(std::string message) {
 	screenMessages.push_back(message);
-	if (screenMessages.size() >= 15) {
+	//if theres more than 20 lines pop the top.
+	if (screenMessages.size() >= 20) {
 		screenMessages.pop_front();
 	}
 }
 
+//Name:			printScreen
+//Purpose:		Print the info to the screen.
+//Return:		void
 void printScreen()
 {
 	std::list<std::string>::const_iterator iterator;
@@ -381,9 +390,9 @@ void printScreen()
 	}
 }
 
-
 //Name:			processCommands
 //Purpose:		processes the user commands and populates the buffer according to message type
+//Return:		void
 void processCommands(std::vector<std::string>& theCommands) {
 	if (theCommands.size() > 0)
 	{
@@ -479,6 +488,7 @@ void processCommands(std::vector<std::string>& theCommands) {
 
 //Name:			readInput
 //Purpose:		parses the input from the user and separates the first and second strings
+//Return:		void
 void readInput(std::vector<std::string>& theStrings, std::string input) {
 	std::string tempString = "";
 	for (int i = 0; i < input.size(); i++)

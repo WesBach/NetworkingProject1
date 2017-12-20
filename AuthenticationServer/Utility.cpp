@@ -13,12 +13,18 @@ static const char alphanum[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz";
 
+//Name:			genRandomChar
+//Purpose:		Generates a random character from the array of characters.
+//Return:		char
 char genRandomChar()
 {
 	int stringLength = sizeof(alphanum) - 1;
 	return alphanum[rand() % stringLength];
 }
 
+//Name:			createSalt
+//Purpose:		Uses gen random char to generate 20 random characters/numbers for a salt value.
+//Return:		std::Strin
 std::string createSalt()
 {
 	srand(time(0));
@@ -32,6 +38,9 @@ std::string createSalt()
 	return str;
 }
 
+//Name:			createHash
+//Purpose:		Hashes the characters passed into the function.
+//Return:		std::String
 std::string createHash(char* pass) {
 	//use sha_256 to generate a hash of the passed in string
 	unsigned char digest[SHA256_DIGEST_LENGTH];

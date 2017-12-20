@@ -158,10 +158,10 @@ int main() {
 	closesocket(ListenSocket);
 	closesocket(ConnectSocket);
 	WSACleanup();
-
 }
 
-
+//Name:			readPacket
+//Purpose:		Reads the packet sent from the chat servers
 void readPacket(userInfo& theUser, int packetLength)
 {
 	std::string message = "";
@@ -182,8 +182,9 @@ void readPacket(userInfo& theUser, int packetLength)
 		//if the id is 4(Register) or 5(Authenticate)
 		if (messageId == 4)//Register
 		{
-			//get the message
+			//get the message length
 			messageLength = theUser.userBuffer.ReadInt32BE();
+			//parse the message
 			message = parseMessage(messageLength, theUser.userBuffer);
 
 			//create the CreateAccount and parse the message
@@ -232,14 +233,16 @@ void readPacket(userInfo& theUser, int packetLength)
 		}
 		else if (messageId == 5) //Authenticate
 		{
+			//get the message length
 			messageLength = theUser.userBuffer.ReadInt32BE();
+			//get the message
 			message = parseMessage(messageLength, theUser.userBuffer);
-
+			//deserialize the message
 			AccountAuthentication::AuthenticateAccount account;
 			account.ParseFromString(message);
 
+			//try to authenticate the account
 			authAccountInfo = pTheSQLWrapper->authenticateAccount(account.email(), account.plaintextpassword());
-
 
 			//authentication success
 			if (authAccountInfo.first.first == 0)
@@ -280,6 +283,9 @@ void readPacket(userInfo& theUser, int packetLength)
 	}
 }
 
+//Name:			sendAuthenticationServerMessage
+//Purpose:		Sends and authentication message to the chat server.
+//Return:		void
 void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message, int messageType) {
 	//server message happens when client joins the server?
 	//userInfo theUser = getClient(*sendingUser);
@@ -292,6 +298,10 @@ void sendAuthenticationServerMessage(userInfo& sendingUser, std::string message,
 	}
 }
 
+
+//Name:			buildMessage
+//Purpose:		Builds the message to be sent.
+//Return:		void
 void buildMessage(userInfo& theUser, std::string& message, int messageType)
 {
 	theUser.userBuffer = Buffer();
@@ -303,12 +313,18 @@ void buildMessage(userInfo& theUser, std::string& message, int messageType)
 	theUser.userBuffer.WriteStringBE(message);
 }
 
+//Name:			parseMessage
+//Purpose:		Parse the message from the chat server.
+//Return:		std::string
 std::string parseMessage(int messageLength, Buffer& userBuffer) {
 	std::string tempMessage = "";
 	tempMessage += userBuffer.ReadStringBE(messageLength);
 	return tempMessage;
 }
 
+//Name:			connectToChatServer
+//Purpose:		After the chat server has connected to us connect to it for message sending purposes.
+//Return:		void
 void connectToChatServer()
 {
 	int iResult = 0;

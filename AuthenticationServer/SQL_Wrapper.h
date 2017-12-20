@@ -1,7 +1,6 @@
 #ifndef _SQLWrapper_HG_
 #define _SQL_Wrapper_HG_
 #include <string>
-
 #include <cppconn\driver.h>
 #include <cppconn\exception.h>
 #include <cppconn\resultset.h>
@@ -16,6 +15,7 @@ public:
 	//returns -1 for server error 
 	//returns 1 for exists
 	//returns 0 for added 
+	//first int is success/failure/etc... second int is userId
 	std::pair<int,int> addAccount(std::string email,std::string password);
 
 	//authenticate the account
