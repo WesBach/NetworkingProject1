@@ -290,6 +290,10 @@ int main(int argc, char** argv) {
 				}
 				populateScreenData(command + " " + roomName);
 			}
+			if (c == '\b')
+			{
+				userInput = userInput.substr(0, userInput.length()-1);
+			}
 			else
 			{
 				userInput += c;
