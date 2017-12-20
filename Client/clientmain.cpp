@@ -338,7 +338,9 @@ int main(int argc, char** argv) {
 		
 		printScreen();
 
-		print_text("%-75s", userInput.c_str());
+		std::string textOnScreen = "-> " + userInput;
+
+		print_text("%-75s", textOnScreen.c_str());
 
 		end_text();
 	}
