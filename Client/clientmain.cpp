@@ -323,6 +323,8 @@ int main(int argc, char** argv) {
 			std::string receivedPhrase = receiveMessage(*g_theBuffer);
 			if (receivedPhrase.size() > 0)
 				populateScreenData(receivedPhrase);
+
+			g_theBuffer = new Buffer();
 		}
 		else if (bytesReceived == -1) {//print error message
 

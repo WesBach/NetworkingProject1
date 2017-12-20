@@ -261,7 +261,7 @@ int main()
 			{
 				//g_theBuffer = new Buffer();
 				userInfo* currInfo = getClient(sock);
-
+				currInfo->userBuffer = Buffer();
 				// Receive message
 				int bytesIn;
 				bytesIn = recv(sock, currInfo->userBuffer.getBufferAsCharArray(), currInfo->userBuffer.GetBufferLength(), 0);
@@ -688,6 +688,16 @@ int parseAuthMessage(userInfo& theinfo) {
 		authenticateFail.ParseFromString(message);
 		//get the request id
 		requestId = authenticateFail.requestid();
+		//add the reason to the end of the message
+		int reason = -1;
+		reason = authenticateFail.reason();
+		if (reason == 0)
+		{
+			tempStr += "INVALID_CREDENTIALS";
+		}
+		else
+			tempStr += "INTERNAL_SERVER_ERROR";
+
 		//add the reason to the end of the message
 		tempStr += authenticateFail.reason();
 		//packet length
