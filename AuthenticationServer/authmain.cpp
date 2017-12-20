@@ -91,6 +91,7 @@ int main() {
 		return 1;
 	}
 	printf("Listen for incoming requests\n");
+	freeaddrinfo(result);
 
 	ULONG nonBlock = 1;
 	//zero out master
@@ -154,6 +155,10 @@ int main() {
 		//should only be one.
 
 	}//end else
+	closesocket(ListenSocket);
+	closesocket(ConnectSocket);
+	WSACleanup();
+
 }
 
 
@@ -308,7 +313,6 @@ void connectToChatServer()
 {
 	int iResult = 0;
 	struct addrinfo* result = 0;
-	struct addrinfo addressInfo;
 	struct addrinfo* ptr = NULL;
 	struct addrinfo hints;
 
@@ -351,5 +355,4 @@ void connectToChatServer()
 		WSACleanup();
 		return;
 	}
-
 }

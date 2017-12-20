@@ -213,12 +213,10 @@ int main(int argc, char** argv) {
 						for (int i = comm.size() + 1; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
-							if (userInput[i] != ' ')
-							{
+							if (userInput[i] != ' '){
 								emailString += userInput[i];
 							}
-							else
-							{
+							else{
 								break;
 							}
 						}
@@ -227,12 +225,10 @@ int main(int argc, char** argv) {
 						for (int i = (emailString.size() + comm.size()) + 2; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
-							if (userInput[i] != ' ')
-							{
+							if (userInput[i] != ' '){
 								pass += userInput[i];
 							}
-							else
-							{
+							else{
 								break;
 							}
 						}
@@ -254,12 +250,10 @@ int main(int argc, char** argv) {
 						for (int i = 0; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
-							if (userInput[i] != ' ')
-							{
+							if (userInput[i] != ' '){
 								comm += userInput[i];
 							}
-							else
-							{
+							else{
 								break;
 							}
 						}
@@ -268,12 +262,10 @@ int main(int argc, char** argv) {
 						for (int i = comm.size() + 1; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
-							if (userInput[i] != ' ')
-							{
+							if (userInput[i] != ' '){
 								emailString += userInput[i];
 							}
-							else
-							{
+							else{
 								break;
 							}
 						}
@@ -282,12 +274,10 @@ int main(int argc, char** argv) {
 						for (int i = (emailString.size() + comm.size()) + 2; i < userInput.size(); i++)
 						{
 							//start at the beginning of the string 
-							if (userInput[i] != ' ')
-							{
+							if (userInput[i] != ' '){
 								pass += userInput[i];
 							}
-							else
-							{
+							else{
 								break;
 							}
 						}
@@ -297,17 +287,13 @@ int main(int argc, char** argv) {
 						isMessagePopulated = true;
 						userInput = "";
 					}
-
 				}
 				populateScreenData(command + " " + roomName);
-
 			}
 			else
 			{
 				userInput += c;
 			}
-
-
 		}
 
 		if (isMessagePopulated)

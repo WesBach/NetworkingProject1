@@ -313,6 +313,7 @@ int main()
 
 	//clean up
 	closesocket(ListenSocket);
+	closesocket(ConnectSocket);
 	WSACleanup();
 }
 
@@ -629,7 +630,7 @@ int parseAuthMessage(userInfo& theinfo) {
 		requestId = create.requestid();
 
 		//write the message id to the buffer
-		g_theBuffer->WriteInt32BE(messageId);
+		//g_theBuffer->WriteInt32BE(messageId);
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 
