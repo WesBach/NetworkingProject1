@@ -629,8 +629,6 @@ int parseAuthMessage(userInfo& theinfo) {
 		//get the request id
 		requestId = create.requestid();
 
-		//write the message id to the buffer
-		//g_theBuffer->WriteInt32BE(messageId);
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 
@@ -649,9 +647,15 @@ int parseAuthMessage(userInfo& theinfo) {
 		//get the request id
 		requestId = createFail.requestid();
 		//add the reason to the end of the message
-		tempStr += createFail.reason();
-		//write the message id to the buffer
-		g_theBuffer->WriteInt32BE(messageId);
+		int reason = -1; 
+		reason = createFail.reason();
+		if (reason == 0)
+		{
+			tempStr += "ACCOUNT_ALREADY_EXISTS";
+		}
+		else
+			tempStr += "INTERNAL_SERVER_ERROR";
+
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 
@@ -668,8 +672,6 @@ int parseAuthMessage(userInfo& theinfo) {
 		authenticate.ParseFromString(message);
 		//get the request id
 		requestId = authenticate.requestid();
-		//write the message id to the buffer
-		g_theBuffer->WriteInt32BE(messageId);
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 
@@ -688,8 +690,6 @@ int parseAuthMessage(userInfo& theinfo) {
 		requestId = authenticateFail.requestid();
 		//add the reason to the end of the message
 		tempStr += authenticateFail.reason();
-		//write the message id to the buffer
-		g_theBuffer->WriteInt32BE(messageId);
 		//packet length
 		g_theBuffer->WriteInt32BE(tempStr.size());
 		//message 

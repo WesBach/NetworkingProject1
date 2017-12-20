@@ -79,18 +79,22 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 	returnInfo.first.second = -1;
 
 	//find the user by it's email
-	std::string selectUserByEmail = "SELECT * FROM user WHERE email =" + email;
-	selectUserByEmail += ";";
+	std::string selectUserByEmail = "SELECT * FROM web_auth WHERE email ='" + email+"';";
+
 	sql::ResultSet* userResult = this->executeSelect(selectUserByEmail);
 
 	//TODO::
 	//make sure only one user was retrieved
 	if (userResult->rowsCount() == 1)
 	{
+		//set it to the first item
+		userResult->next();
+		//get the user id
+		int userId = userResult->getInt("userId");
 		//get the user salt
-		int userId = userResult->getInt(4);
-		std::string salt = userResult->getString(3);
-		std::string hash = userResult->getString(5);
+		std::string salt = userResult->getString("salt");
+		//get the user hash
+		std::string hash = userResult->getString("hashed_password");
 
 		std::string tempPass = password + salt;
 		//hash the password
@@ -106,8 +110,8 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 			//they match and were good to go
 			//success
 			returnInfo.first.first =  0;
-			std::string getUserById = "SELECT * FROM user WHERE id =" + userId;
-			getUserById += ";";
+			std::string getUserById = "SELECT * FROM user WHERE id ='" + userId;
+			getUserById += "';";
 
 			sql::ResultSet* theUser;
 			theUser = executeSelect(getUserById);
@@ -120,7 +124,7 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 
 				//update the last login 
 				std::string update = "UPDATE user WHERE id = " + userId;
-				update += " SET last_login= now();";
+				update += "' SET last_login= NOW();";
 				executeUpdate(update);
 
 				return returnInfo;

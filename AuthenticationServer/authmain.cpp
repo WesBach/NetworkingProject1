@@ -212,13 +212,13 @@ void readPacket(userInfo& theUser, int packetLength)
 			else
 			{
 				//create the AuthenticateAccountFailure object and populate it
-				AccountAuthentication::AuthenticateAccountFailure failure;
+				AccountAuthentication::CreateAccountFailure failure;
 				failure.set_requestid(account.requestid());
 
 				if (addAccountInfo.first == 1)
 				{
 					//already exists
-					failure.set_reason(failure.INVALID_CREDENTIALS);
+					failure.set_reason(failure.ACCOUNT_ALREADY_EXISTS);
 				}
 				else //server error
 					failure.set_reason(failure.INTERNAL_SERVER_ERROR);

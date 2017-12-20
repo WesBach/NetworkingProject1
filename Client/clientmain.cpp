@@ -281,9 +281,9 @@ int main(int argc, char** argv) {
 								break;
 							}
 						}
-						theCommands.push_back(command);
-						theCommands.push_back(email);
-						theCommands.push_back(password);
+						theCommands.push_back(comm);
+						theCommands.push_back(emailString);
+						theCommands.push_back(pass);
 						isMessagePopulated = true;
 						userInput = "";
 					}
@@ -311,6 +311,9 @@ int main(int argc, char** argv) {
 			{
 				print_text("Send failed with error: %s", sendResult);
 			}
+
+			//clear the buffer for the next set of info
+			g_theBuffer = new Buffer();
 		}
 
 		bytesReceived = recv(ConnectSocket, g_theBuffer->getBufferAsCharArray(), g_theBuffer->GetBufferLength() + 1, 0);
@@ -330,9 +333,7 @@ int main(int argc, char** argv) {
 
 		//clear the commands so they don't build up
 		theCommands.clear();
-		//clear the buffer for the next set of info
-		g_theBuffer = new Buffer();
-
+		
 		printScreen();
 
 		end_text();
