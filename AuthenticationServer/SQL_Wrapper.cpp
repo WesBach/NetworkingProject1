@@ -10,7 +10,7 @@ void SQL_Wrapper::connectToDB()
 	//try to get a connection
 	try {
 		driver = get_driver_instance();
-		connection = driver->connect("127.0.0.1:3306", "root", "SQL123");
+		connection = driver->connect("127.0.0.1:3306", "root", "root");
 		connection->setSchema("authentication");
 	}
 	catch (sql::SQLException &exception)
@@ -123,6 +123,7 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 			getUserById += std::to_string(userId); ;
 			getUserById += "';";
 
+			//TODO: ADD TO AUTH
 			sql::ResultSet* theUser;
 			theUser = executeSelect(getUserById);
 
