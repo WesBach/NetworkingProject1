@@ -92,9 +92,9 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 		//get the user id
 		int userId = userResult->getInt("userId");
 		//get the user salt
-		std::string salt = userResult->getString("salt");
+		std::string salt = userResult->getString("salt").c_str();
 		//get the user hash
-		std::string hash = userResult->getString("hashed_password");
+		std::string hash = userResult->getString("hashed_password").c_str();
 
 		std::string tempPass = password + salt;
 		//hash the password
