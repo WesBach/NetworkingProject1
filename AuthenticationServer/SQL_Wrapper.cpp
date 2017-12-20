@@ -126,9 +126,9 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 				returnInfo.second = theUser->getString(3).c_str();
 
 				//update the last login 
-				std::string update = "UPDATE user WHERE id = ";
+				std::string update = "UPDATE user SET last_login = NOW() WHERE id = ";
 				update += std::to_string(userId);
-				update += " SET last_login= NOW();";
+				update += " ;";
 				executeUpdate(update);
 
 				return returnInfo;

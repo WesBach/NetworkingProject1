@@ -248,6 +248,7 @@ void readPacket(userInfo& theUser, int packetLength)
 				AccountAuthentication::AuthenticateAccountSuccess authSuccess;
 				authSuccess.set_requestid(account.requestid());
 				authSuccess.set_userid(authAccountInfo.first.first);
+				//authSuccess.set_creationdate(authAccountInfo.first.second);
 
 				std::string authSerial = authSuccess.SerializeAsString();
 				//send the message
