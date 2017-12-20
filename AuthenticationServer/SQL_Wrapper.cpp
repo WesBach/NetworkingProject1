@@ -119,13 +119,16 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 
 			if (theUser->rowsCount() == 1)
 			{
+				//set the first item
+				theUser->next();
 				//populate the pair
 				returnInfo.first.second = theUser->getInt(1);
-				returnInfo.second = theUser->getString(3);
+				returnInfo.second = theUser->getString(3).c_str();
 
 				//update the last login 
-				std::string update = "UPDATE user WHERE id = " + userId;
-				update += "' SET last_login= NOW();";
+				std::string update = "UPDATE user WHERE id = ";
+				update += std::to_string(userId);
+				update += " SET last_login= NOW();";
 				executeUpdate(update);
 
 				return returnInfo;
