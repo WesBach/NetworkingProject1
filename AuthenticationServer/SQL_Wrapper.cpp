@@ -2,6 +2,9 @@
 #include "Utility.h"
 //SQL_Wrapper* SQL_Wrapper::theWrapper = nullptr;
 
+//Name:			connectToDB
+//Purpose:		Tries to connect to the database.
+//Return:		void
 void SQL_Wrapper::connectToDB()
 {
 	//try to get a connection
@@ -17,6 +20,9 @@ void SQL_Wrapper::connectToDB()
 	}
 }
 
+//Name:			addAccount
+//Purpose:		Given an email and password try to add the accoun to the MySQL database.
+//Return:		std::pair<int, int> (success//failure,userId)
 std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string password)
 {
 	//returns -1 for server error 
@@ -68,6 +74,9 @@ std::pair<int, int> SQL_Wrapper::addAccount(std::string email, std::string passw
 	return returnInfo;
 }
 
+//Name:			authenticateAccount
+//Purpose:		Given an email and password try to authenticate the account in the MySQL database.
+//Return:		std::pair<std::pair<int, int>, std::string> (success//failure,userId),date added
 std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std::string email, std::string password)
 { 
 	// -1 for server error 
@@ -146,6 +155,9 @@ std::pair<std::pair<int, int>, std::string> SQL_Wrapper::authenticateAccount(std
 	return returnInfo;
 }
 
+//Name:			execute
+//Purpose:		Execute a passed in SQL statement.
+//Return:		bool
 bool SQL_Wrapper::execute(const std::string& statement)
 {
 	try
@@ -165,6 +177,9 @@ bool SQL_Wrapper::execute(const std::string& statement)
 	return false;
 }
 
+//Name:			executeUpdate
+//Purpose:		Execute a passed in SQL update statement.
+//Return:		int
 int SQL_Wrapper::executeUpdate(const std::string& statement)
 {
 	try
@@ -184,6 +199,8 @@ int SQL_Wrapper::executeUpdate(const std::string& statement)
 	return false;
 }
 
+//took this out while troubleshooting
+
 //SQL_Wrapper * SQL_Wrapper::getInstance()
 //{
 //	if (SQL_Wrapper::theWrapper == nullptr)
@@ -194,6 +211,9 @@ int SQL_Wrapper::executeUpdate(const std::string& statement)
 //	return SQL_Wrapper::theWrapper;
 //}
 
+//Name:			executeSelect
+//Purpose:		Execute a passed in SQL select statement.
+//Return:		sql::ResultSet*
 sql::ResultSet* SQL_Wrapper::executeSelect(const std::string& statement) {
 	try
 	{
